@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import MembersPage from "./members-page";
 import {
   Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, ChevronDown,
   ChevronLeft, ChevronRight, CircleHelp, ClipboardCheck, CreditCard, Dumbbell,
@@ -177,6 +178,7 @@ export default function Home() {
         </header>
 
         <div className="page-content">
+          {active === "Members" ? <MembersPage /> : <>
           <section className="welcome-row">
             <div><p className="eyebrow">THURSDAY, NOVEMBER 5, 2026</p><h1>Good morning, Alex <span>✦</span></h1><p className="welcome-subtitle">Here&apos;s what&apos;s happening at your gym today.</p></div>
             <div className="welcome-actions">
@@ -251,6 +253,7 @@ export default function Home() {
           </section>
 
           <footer className="footer"><span>© 2026 GymDesk. Built for your gym.</span><span><span className="online-dot" /> All systems operational</span></footer>
+        </>}
         </div>
       </main>
 
