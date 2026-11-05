@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { Plus, Search, SlidersHorizontal, Pencil, Trash2, Printer, Wallet, ReceiptText, TrendingDown, X, Tag } from "lucide-react";
 
 type Expense = { id: number; title: string; category: string; amount: number; date: string; method: string; reference: string; description: string };
@@ -41,7 +41,7 @@ export default function ExpensesPage() {
   const categoryTotals = categories.map(category => ({ category, amount: expenses.filter(e => e.category === category && e.date.slice(0,7) === today.slice(0,7)).reduce((sum,e) => sum + e.amount, 0) })).filter(x => x.amount > 0).sort((a,b) => b.amount-a.amount);
   const openNew = () => { setEditingId(null); setForm({ ...blankForm, date: today }); setError(""); setModal(true); };
   const openEdit = (item: Expense) => { setEditingId(item.id); setForm({ title:item.title, category:item.category, amount:String(item.amount), date:item.date, method:item.method, reference:item.reference, description:item.description }); setError(""); setModal(true); };
-  const save = (event: React.FormEvent<HTMLFormElement>) => {
+  const save = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const amount = Number(form.amount);
     if (!form.title.trim() || !Number.isFinite(amount) || amount <= 0 || !form.date) { setError("Enter an expense name, a valid amount and a date."); return; }
