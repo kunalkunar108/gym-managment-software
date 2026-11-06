@@ -6,6 +6,7 @@ import MembershipPlansPage from "./membership-plans-page";
 import AttendancePage from "./attendance-page";
 import PaymentsPage from "./payments-page";
 import ExpensesPage from "./expenses-page";
+import ReportsPage from "./reports-page";
 import {
   Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, ChevronDown,
   ChevronLeft, ChevronRight, CircleHelp, ClipboardCheck, CreditCard, Dumbbell,
@@ -182,7 +183,7 @@ export default function Home() {
         </header>
 
         <div className="page-content">
-          {active === "Members" ? <MembersPage /> : active === "Memberships" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : <>
+          {active === "Members" ? <MembersPage /> : active === "Memberships" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : <>
           <section className="welcome-row">
             <div><p className="eyebrow">THURSDAY, NOVEMBER 5, 2026</p><h1>Good morning, Alex <span>✦</span></h1><p className="welcome-subtitle">Here&apos;s what&apos;s happening at your gym today.</p></div>
             <div className="welcome-actions">
