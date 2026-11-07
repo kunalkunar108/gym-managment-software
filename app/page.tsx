@@ -64,13 +64,6 @@ const members = [
   { name: "Aditya Kumar", initials: "AK", plan: "Monthly", date: "Yesterday", amount: "₹1,200", status: "Pending", color: "blue" }
 ];
 
-const checkins = [
-  { name: "Vikash Kumar", initials: "VK", time: "07:42 AM", type: "QR scan" },
-  { name: "Sneha Singh", initials: "SS", time: "07:38 AM", type: "Manual" },
-  { name: "Rahul Raj", initials: "RR", time: "07:31 AM", type: "QR scan" },
-  { name: "Anjali Kumari", initials: "AK", time: "07:24 AM", type: "QR scan" }
-];
-
 const expiries = [
   { name: "Saurabh Kumar", plan: "Monthly plan", days: "Expires today", tone: "red" },
   { name: "Neha Gupta", plan: "Quarterly plan", days: "In 2 days", tone: "amber" },
@@ -174,7 +167,6 @@ export default function Home() {
               >
                 <item.icon size={18} strokeWidth={1.85} />
                 <span>{item.label}</span>
-                {item.label === "QR check-in" && <span className="nav-new">NEW</span>}
               </button>
             </div>
           ))}
