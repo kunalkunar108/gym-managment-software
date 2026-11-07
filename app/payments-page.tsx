@@ -139,7 +139,7 @@ export default function PaymentsPage() {
         <div className="receipt-amount">{money(receipt.amount)}<small>Amount</small></div>
         <div className="receipt-details">
           <div><small>Receipt number</small><strong>{receipt.receipt}</strong></div><div><small>Payment date</small><strong>{prettyDate(receipt.date)}</strong></div>
-          <div><small>Member</small><strong>{receipt.member}</strong></div><div><small>Phone</small><strong>{receipt.phone}</strong></div>
+          <div><small>Member</small><strong>{receipt.memberId ? <button type="button" onClick={() => { setReceipt(null); openMemberProfile(receipt.memberId!); }} className="text-left text-[#278348] hover:underline">{receipt.member}</button> : receipt.member}</strong></div><div><small>Phone</small><strong>{receipt.phone}</strong></div>
           <div><small>Payment method</small><strong>{methodLabel(receipt.method)}</strong></div><div><small>Reference</small><strong>{receipt.reference}</strong></div>
           <div className="receipt-full"><small>Description</small><strong>{receipt.note}</strong></div>
         </div>
