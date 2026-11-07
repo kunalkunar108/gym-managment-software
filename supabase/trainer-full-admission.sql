@@ -83,7 +83,7 @@ begin
   end if;
   if p_gender not in ('male','female','other','prefer_not_to_say') then raise exception 'Select a valid gender.'; end if;
   if p_start_date is null or p_end_date is null or p_end_date < p_start_date then raise exception 'Invalid membership dates.'; end if;
-  if p_discount_percent is null or p_discount_percent < 0 or p_discount_percent >= 100 then raise exception 'Discount must be between 0 and 99.99%.'; end if;
+  if p_discount_percent is null or p_discount_percent < 0 or p_discount_percent >= 100 then raise exception 'Discount must be between 0 and 99.99 percent.'; end if;
   if p_admission_fee is null or p_admission_fee < 0 then raise exception 'Admission fee cannot be negative.'; end if;
   if p_suggested_payment_method not in ('cash','upi','card','bank_transfer') then raise exception 'Select a valid suggested payment method.'; end if;
 
