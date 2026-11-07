@@ -24,7 +24,7 @@ export default function AdmissionsPage() {
   const baseAmount = Number(selectedPlan?.price ?? 0);
   const discount = Math.min(99.99, Math.max(0, Number(form.discount) || 0));
   const total = Math.max(0, baseAmount * (1 - discount / 100));
-  const phoneMatches = useMemo(() => form.phone.trim().length >= 5 ? members.filter(m => m.phone.replace(/\\D/g, "").includes(form.phone.replace(/\\D/g, ""))) : [], [members, form.phone]);
+  const phoneMatches = useMemo(() => form.phone.trim().length >= 5 ? members.filter(m => m.phone.replace(/\D/g, "").includes(form.phone.replace(/\D/g, ""))) : [], [members, form.phone]);
 
   async function load() {
     setLoading(true); setError("");
@@ -110,7 +110,7 @@ export default function AdmissionsPage() {
           <div className="member-form-grid">
             <label>Total amount (₹)<input readOnly value={total.toFixed(2)}/></label>
             <label>Payment method *<select value={form.method} onChange={e=>setForm({...form,method:e.target.value})}><option value="cash">Cash</option><option value="upi">UPI</option><option value="card">Card</option><option value="bank_transfer">Bank transfer</option></select></label>
-            <label>Payment status *<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="paid">Paid</option><option value="pending">Pending</option><option value="failed">Failed</option><option value="refunded">Refunded</option></select></label>
+            <label>Payment status *<select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="paid">Paid</option><option value="pending">Pending</option></select></label>
           </div>
           <div className="rounded-xl bg-[#f7f9f7] p-4 text-sm space-y-2"><div className="flex justify-between"><span>Plan price</span><strong>{money(baseAmount)}</strong></div><div className="flex justify-between"><span>Discount ({discount}%)</span><strong>− {money(baseAmount-total)}</strong></div><div className="flex justify-between border-t border-[#e6ebe6] pt-2"><strong>Payable total</strong><strong>{money(total)}</strong></div></div>
         </section>
