@@ -55,7 +55,7 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
   function changeKind(next: "new" | "re") {
     setKind(next); setForm(initial); setPhotoFile(null); setPhotoPreview(null); setSuccess(""); setError("");
   }
-  function chooseMember(id: string) {
+  async function chooseMember(id: string) {
     const m = members.find(x => x.id === id);
     setForm(old => ({ ...old, memberId: id, fullName: m?.full_name ?? "", phone: m?.phone ?? "", secondaryPhone: m?.secondary_phone ?? "", gender: m?.gender ?? "male", address: m?.address ?? "" }));\n    setPhotoFile(null); setPhotoPreview(null);\n    if (m?.photo_path) { const { data } = await supabase.storage.from("member-photos").createSignedUrl(m.photo_path, 3600); setPhotoPreview(data?.signedUrl ?? null); }
   }
