@@ -7,12 +7,14 @@ import { supabase } from "../lib/supabase";
 type Props = { memberId: string; ownerId: string; isTrainer: boolean; onBack: () => void };
 type Note = { id: string; note: string; author_name: string; author_role: string; created_at: string };
 type Membership = { id: string; plan_name: string | null; start_date: string; end_date: string; status: string; amount?: number };
+type PaymentRecord = { id: string; receipt_number: string; amount: number; paid_on: string; method: string; status: string; reference: string | null };
 const prettyDate = (value: string) => value ? new Date(value + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
 export default function MemberProfile({ memberId, ownerId, isTrainer, onBack }: Props) {
   const [member, setMember] = useState<any>(null);
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [payments, setPayments] = useState<PaymentRecord[]>([]);
   const [noteText, setNoteText] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
