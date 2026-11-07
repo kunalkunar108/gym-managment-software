@@ -10,6 +10,7 @@ import ReportsPage from "./reports-page";
 import StaffPage from "./staff-page";
 import QRCheckinPage from "./qr-checkin-page";
 import SettingsPage from "./settings-page";
+import SignOutButton from "./sign-out-button";
 import {
   Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, ChevronDown,
   ChevronLeft, ChevronRight, CircleHelp, ClipboardCheck, CreditCard, Dumbbell,
@@ -161,7 +162,7 @@ export default function Home() {
           <div className="profile-row">
             <div className="profile-avatar">AK</div>
             <div className="min-w-0 flex-1"><p className="profile-name">Alex Kumar</p><p className="profile-role">Gym owner</p></div>
-            <button className="icon-button small" aria-label="Account menu"><MoreHorizontal size={18} /></button>
+            <SignOutButton />
           </div>
         </div>
       </aside>
