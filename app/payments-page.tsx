@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Search, Plus, SlidersHorizontal, X, IndianRupee, CreditCard, Wallet, Smartphone, Building2, Printer, CheckCircle2, Clock3, Eye, Check, ReceiptText, LoaderCircle, RefreshCw } from "lucide-react";
-import { supabase } from "../lib/supabase";\nimport { openMemberProfile } from "../lib/member-navigation";
+import { supabase } from "../lib/supabase";
+import { openMemberProfile } from "../lib/member-navigation";
 
 type Method = "cash" | "upi" | "card" | "bank_transfer";
 type Status = "paid" | "pending" | "failed" | "refunded";
