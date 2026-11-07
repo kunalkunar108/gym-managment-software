@@ -77,7 +77,7 @@ export default function OverviewPage({ onNavigate }: { onNavigate: (page: string
   }
 
   return <div>
-    <section className="welcome-row"><div><p className="eyebrow">{todayText.toUpperCase()}</p><h1>Gym overview <span>✦</span></h1><p className="welcome-subtitle">Your live gym activity and business summary.</p></div><div className="welcome-actions"><button className="button-secondary" onClick={()=>onNavigate("Reports")}><Download size={16}/> Reports</button><button className="button-primary" onClick={()=>onNavigate("Members")}><Plus size={17}/> Add member</button></div></section>
+    <section className="welcome-row"><div><p className="eyebrow">{todayText.toUpperCase()}</p><h1>Gym overview <span>✦</span></h1><p className="welcome-subtitle">Your live gym activity and business summary.</p></div><div className="welcome-actions"><button className="button-secondary" onClick={()=>onNavigate("Reports")}><Download size={16}/> Reports</button><button className="button-primary" onClick={()=>onNavigate("Admissions")}><Plus size={17}/> Add member</button></div></section>
     {error&&<div role="alert" className="mb-5 rounded-xl border border-[#f2d2ce] bg-[#fff4f2] px-4 py-3 text-sm text-[#a63d32]">{error}</div>}
     <section className="metric-grid">
       {metric("Total members",loading?"—":String(members.length),"registered members",Users,"green")}
