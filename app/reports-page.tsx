@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, TrendingUp, TrendingDown, Users, Wallet, ClipboardCheck, CreditCard, Printer, LoaderCircle, RefreshCw } from "lucide-react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/supabase";\nimport { openMemberProfile } from "../lib/member-navigation";
 
 type Period = "This month" | "Last month" | "All time";
 type PaymentRow = { id:string; receipt_number:string; amount:number|string; paid_on:string; method:string; status:string; member_id:string|null; note:string|null };
@@ -91,7 +91,7 @@ export default function ReportsPage(){
       </div>
     </section>
     <section className="panel report-history"><div className="panel-heading"><div><div className="panel-title">Payment history</div><p className="panel-subtitle">Recent recorded transactions · {periodLabel}</p></div><span className="report-history-count">{history.length} records</span></div>
-      <div className="table-scroll"><table className="members-table report-table"><thead><tr><th>RECEIPT</th><th>MEMBER</th><th>DATE</th><th>METHOD</th><th>AMOUNT</th><th>STATUS</th></tr></thead><tbody>{history.map(p=><tr key={p.id}><td className="report-receipt">{p.receipt_number}</td><td>{p.member_id?memberNames[p.member_id]||"Deleted member":"Unassigned"}</td><td>{dateLabel(p.paid_on)}</td><td>{methodLabel(p.method)}</td><td className="amount-cell">{fmt(Number(p.amount)||0)}</td><td><span className={"status-badge "+(p.status==="paid"?"status-active":"status-pending")}>{p.status.charAt(0).toUpperCase()+p.status.slice(1)}</span></td></tr>)}{!loading&&history.length===0&&<tr><td colSpan={6} className="empty-row">No payments recorded for this period.</td></tr>}</tbody></table></div>
+      <div className="table-scroll"><table className="members-table report-table"><thead><tr><th>RECEIPT</th><th>MEMBER</th><th>DATE</th><th>METHOD</th><th>AMOUNT</th><th>STATUS</th></tr></thead><tbody>{history.map(p=><tr key={p.id}><td className="report-receipt">{p.receipt_number}</td><td>{p.member_id && memberNames[p.member_id] ? <button type="button" onClick={()=>openMemberProfile(p.member_id!)} className="text-left font-medium text-[#278348] hover:underline">{memberNames[p.member_id]}</button> : p.member_id ? "Deleted member" : "Unassigned"}</td><td>{dateLabel(p.paid_on)}</td><td>{methodLabel(p.method)}</td><td className="amount-cell">{fmt(Number(p.amount)||0)}</td><td><span className={"status-badge "+(p.status==="paid"?"status-active":"status-pending")}>{p.status.charAt(0).toUpperCase()+p.status.slice(1)}</span></td></tr>)}{!loading&&history.length===0&&<tr><td colSpan={6} className="empty-row">No payments recorded for this period.</td></tr>}</tbody></table></div>
       <p className="directory-footnote">Revenue includes payments marked paid. Pending, failed and refunded payments are excluded from revenue.</p>
     </section>
   </div>;
