@@ -42,7 +42,7 @@ export default function StaffPage() {
         id: row.id, name: row.full_name, phone: row.phone, email: row.email ?? "",
         role: (String(row.role).charAt(0).toUpperCase() + String(row.role).slice(1)) as StaffRole,
         joined: row.joined_on, status: row.status === "active" ? "Active" : "Inactive",
-        salary: row.salary === null ? "" : String(row.salary)
+        salary: row.salary === null ? "" : String(row.salary), userId: row.user_id ?? null
       })));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not load staff records.");
@@ -104,8 +104,12 @@ export default function StaffPage() {
   }
 
   async function remove(s: StaffMember) {
-    if (!userId || !window.confirm("Delete " + s.name + " from this staff list?")) return;
+    if (!userId || !window.confirm("Remove " + s.name + " from your staff list? Their trainer login will also be removed if one exists.")) return;
     setWorking(s.id); setError("");
+    if (s.userId) {
+      const { data, error: invokeError } = await supabase.functions.invoke("manage-trainer-account", { body: { staff_id: s.id, action: "remove" } });
+      if (invokeError || data?.error) { setError(data?.error || invokeError?.message || "Could not remove trainer login."); setWorking(null); return; }
+    }
     const { error: deleteError } = await supabase.from("staff").delete().eq("id", s.id).eq("owner_id", userId);
     if (deleteError) setError(deleteError.message);
     else await loadStaff();
