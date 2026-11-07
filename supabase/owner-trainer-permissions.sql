@@ -121,18 +121,11 @@ using (
   and owner_id = public.current_gym_owner_id()
 );
 
--- Membership information is visible to trainers to support safe attendance checks.
+-- Memberships and their financial amounts remain owner-only.
 create policy "Gym owners manage memberships" on public.memberships
 for all to authenticated
 using (public.is_gym_owner() and owner_id = public.current_gym_owner_id())
 with check (public.is_gym_owner() and owner_id = public.current_gym_owner_id());
-
-create policy "Trainers read memberships" on public.memberships
-for select to authenticated
-using (
-  not public.is_gym_owner()
-  and owner_id = public.current_gym_owner_id()
-);
 
 -- Trainers may view and record attendance for any member of their gym.
 create policy "Gym owners manage attendance" on public.attendance
@@ -179,3 +172,72 @@ with check (
 
 -- Keep owner-only admission RPC restricted to the owner. Trainers cannot create
 -- admissions, memberships or payments through the existing complete_admission function.
+
+-- Trainers can validate a member's active membership and check them in without
+-- receiving access to membership/payment amounts.
+create or replace function public.trainer_qr_check_in(p_member_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_owner_id uuid := public.current_gym_owner_id();
+  v_attendance_id uuid;
+  v_member_name text;
+begin
+  if auth.uid() is null or v_owner_id is null or public.is_gym_owner() then
+    raise exception 'An active trainer account is required.';
+  end if;
+
+  if not exists (
+    select 1 from public.staff s
+    where s.user_id = auth.uid()
+      and s.owner_id = v_owner_id
+      and s.status = 'active'
+  ) then
+    raise exception 'Your trainer account is inactive.';
+  end if;
+
+  select m.full_name into v_member_name
+  from public.members m
+  where m.id = p_member_id and m.owner_id = v_owner_id and m.status = 'active';
+
+  if v_member_name is null then
+    raise exception 'Active gym member not found.';
+  end if;
+
+  if not exists (
+    select 1 from public.memberships ms
+    where ms.member_id = p_member_id
+      and ms.owner_id = v_owner_id
+      and ms.status = 'active'
+      and ms.start_date <= current_date
+      and ms.end_date >= current_date
+  ) then
+    raise exception 'This member does not have a current active membership.';
+  end if;
+
+  if exists (
+    select 1 from public.attendance a
+    where a.member_id = p_member_id
+      and a.owner_id = v_owner_id
+      and a.attendance_date = current_date
+  ) then
+    raise exception 'This member is already checked in today.';
+  end if;
+
+  insert into public.attendance(owner_id, member_id, attendance_date, check_in, source)
+  values (v_owner_id, p_member_id, current_date, now(), 'qr')
+  returning id into v_attendance_id;
+
+  return jsonb_build_object(
+    'attendance_id', v_attendance_id,
+    'member_id', p_member_id,
+    'member_name', v_member_name
+  );
+end;
+$$;
+
+revoke all on function public.trainer_qr_check_in(uuid) from public;
+grant execute on function public.trainer_qr_check_in(uuid) to authenticated;
