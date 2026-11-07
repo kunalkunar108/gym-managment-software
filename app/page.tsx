@@ -116,6 +116,13 @@ export default function Home() {
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickType, setQuickType] = useState("member");
 
+  const filteredMembers = useMemo(
+    () => members.filter((member) => member.name.toLowerCase().includes(search.toLowerCase())),
+    [search]
+  );
+
+  const today = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
+
   useEffect(() => {
     let alive = true;
     async function resolveAccount() {
@@ -140,13 +147,6 @@ export default function Home() {
   if (roleLoading) return <div className="min-h-screen flex items-center justify-center bg-[#f7f9f7] text-[#637168]">Loading your GymDesk workspace…</div>;
   if (accountBlocked) return <div className="min-h-screen flex items-center justify-center bg-[#f7f9f7] p-6"><div className="max-w-md rounded-2xl border border-[#e5ebe5] bg-white p-7 text-center"><h1 className="text-xl font-semibold">Account access unavailable</h1><p className="mt-2 text-sm text-[#7b887f]">This trainer account is inactive or is not linked to a gym. Contact your gym owner.</p><div className="mt-5 flex justify-center"><SignOutButton /></div></div></div>;
   if (trainerOwnerId) return <TrainerDashboard ownerId={trainerOwnerId} />;
-
-  const filteredMembers = useMemo(
-    () => members.filter((member) => member.name.toLowerCase().includes(search.toLowerCase())),
-    [search]
-  );
-
-  const today = new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date());
 
   return (
     <div className="min-h-screen bg-[#f7f9f7] text-[#17211c]">
