@@ -11,7 +11,7 @@ type Member = {
   email: string | null;
   joined_on: string;
   status: "active" | "inactive" | "expired";
-  memberships?: { id: string; plan_id: string | null; start_date: string; end_date: string; amount: number; status: string; membership_plans?: { name: string } | null }[];
+  memberships?: { id: string; plan_id: string | null; start_date: string; end_date: string; amount: number; status: string; suggested_payment_method?: string | null; membership_plans?: { name: string } | null }[];
 };
 type Plan = { id: string; name: string; duration_months: number; price: number; is_active: boolean };
 const blank = { full_name: "", phone: "", email: "", joined_on: new Date().toISOString().slice(0, 10) };
@@ -44,7 +44,7 @@ export default function MembersPage({ onAddMember }: { onAddMember: () => void }
       setUserId(authData.user.id);
       const { data, error: queryError } = await supabase
         .from("members")
-        .select("id, full_name, phone, email, joined_on, status, memberships(id,plan_id,start_date,end_date,amount,status,membership_plans(name))")
+        .select("id, full_name, phone, email, joined_on, status, memberships(id,plan_id,start_date,end_date,amount,status,suggested_payment_method,membership_plans(name))")
         .eq("owner_id", authData.user.id)
         .order("created_at", { ascending: false });
       if (queryError) throw queryError;
@@ -182,6 +182,6 @@ export default function MembersPage({ onAddMember }: { onAddMember: () => void }
       <label>Amount (₹) *<input required type="number" min="0" step="0.01" value={membershipForm.amount} onChange={e=>setMembershipForm({...membershipForm,amount:e.target.value})}/></label>
       <label>Status *<select value={membershipForm.status} onChange={e=>setMembershipForm({...membershipForm,status:e.target.value})}><option value="active">Active</option><option value="pending">Pending</option><option value="expired">Expired</option><option value="cancelled">Cancelled</option></select></label>
     </div>{error && <p role="alert" className="mt-3 text-sm text-[#b33b32]">{error}</p>}<div className="form-modal-actions"><button type="button" className="button-secondary" onClick={()=>setMembershipModal(false)}>Cancel</button><button type="submit" className="button-primary" disabled={saving}>{saving?"Saving…":"Save membership"}</button></div></form></div>}
-    {selectedMember&&<div className="modal-backdrop" onClick={()=>setSelected(null)}><div className="member-detail-modal" onClick={e=>e.stopPropagation()}><div className="form-modal-head"><div><p className="eyebrow">MEMBER DETAILS</p><h2>{selectedMember.full_name}</h2></div><button className="icon-button" onClick={()=>setSelected(null)}><X size={18}/></button></div><div className="detail-contact"><p><Phone size={15}/>{selectedMember.phone}</p><p><Mail size={15}/>{selectedMember.email||"No email recorded"}</p></div><div className="detail-grid"><div><small>Membership</small><strong>{membershipLabel(selectedMember)}</strong></div><div><small>Member status</small><strong>{selectedMember.status}</strong></div><div><small>Joined</small><strong>{date(selectedMember.joined_on)}</strong></div></div><div className="form-modal-actions"><button className="button-secondary" onClick={()=>{setSelected(null);openEdit(selectedMember);}}>Edit profile</button><button className="button-secondary" onClick={()=>{setSelected(null);openMembership(selectedMember);}}>Manage membership</button><button className="button-primary" onClick={()=>setSelected(null)}>Close</button></div></div></div>}
+    {selectedMember&&<div className="modal-backdrop" onClick={()=>setSelected(null)}><div className="member-detail-modal" onClick={e=>e.stopPropagation()}><div className="form-modal-head"><div><p className="eyebrow">MEMBER DETAILS</p><h2>{selectedMember.full_name}</h2></div><button className="icon-button" onClick={()=>setSelected(null)}><X size={18}/></button></div><div className="detail-contact"><p><Phone size={15}/>{selectedMember.phone}</p><p><Mail size={15}/>{selectedMember.email||"No email recorded"}</p></div><div className="detail-grid"><div><small>Membership</small><strong>{membershipLabel(selectedMember)}</strong></div><div><small>Member status</small><strong>{selectedMember.status}</strong></div><div><small>Joined</small><strong>{date(selectedMember.joined_on)}</strong></div><div><small>Trainer suggested payment method</small><strong>{currentMembership(selectedMember)?.suggested_payment_method ? currentMembership(selectedMember)!.suggested_payment_method!.replace("_", " ").toUpperCase() : "Not provided"}</strong></div></div><div className="form-modal-actions"><button className="button-secondary" onClick={()=>{setSelected(null);openEdit(selectedMember);}}>Edit profile</button><button className="button-secondary" onClick={()=>{setSelected(null);openMembership(selectedMember);}}>Manage membership</button><button className="button-primary" onClick={()=>setSelected(null)}>Close</button></div></div></div>}
   </div>;
 }
