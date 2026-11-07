@@ -117,7 +117,7 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
             <label className="payment-note-field">Address<input value={form.address} onChange={e=>setForm({...form,address:e.target.value})} placeholder="Member address"/></label>
           </div>
         </section>
-        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">2. Membership details</h2><p className="panel-subtitle">"Choose a plan, dates, and applicable discount."</p></div>
+        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">2. Membership details</h2><p className="panel-subtitle">Choose a plan, dates, and applicable discount.</p></div>
           <div className="member-form-grid">
             <label>Membership plan *<select required value={form.planId} onChange={e=>choosePlan(e.target.value)}><option value="">Select plan</option>{plans.map(p=><option key={p.id} value={p.id}>{p.name}{" · " + money(Number(p.price))} / {p.duration_months} months</option>)}</select></label>
             <label>Start date *<input required type="date" value={form.startDate} onChange={e=>chooseStart(e.target.value)}/></label>
