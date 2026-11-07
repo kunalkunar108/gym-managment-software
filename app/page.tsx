@@ -5,7 +5,6 @@ import MembersPage from "./members-page";
 import AdmissionsPage from "./admissions-page";
 import OverviewPage from "./overview-page";
 import MembershipPlansPage from "./membership-plans-page";
-import MembershipsPage from "./memberships-page";
 import AttendancePage from "./attendance-page";
 import PaymentsPage from "./payments-page";
 import ExpensesPage from "./expenses-page";
@@ -31,7 +30,6 @@ const navItems: NavItem[] = [
   { label: "Overview", icon: LayoutDashboard, section: "WORKSPACE" },
   { label: "Admissions", icon: UserRoundPlus },
   { label: "Members", icon: Users },
-  { label: "Memberships", icon: CreditCard },
   { label: "Membership Plans", icon: CalendarClock },
   { label: "Attendance", icon: ClipboardCheck },
   { label: "QR check-in", icon: QrCode },
@@ -191,7 +189,7 @@ export default function Home() {
         </header>
 
         <div className="page-content">
-          {active === "Admissions" ? <AdmissionsPage /> : active === "Members" ? <MembersPage /> : active === "Memberships" ? <MembershipsPage /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "QR check-in" ? <QRCheckinPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
+          {active === "Admissions" ? <AdmissionsPage /> : active === "Members" ? <MembersPage /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "QR check-in" ? <QRCheckinPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
         </div>
       </main>
 
