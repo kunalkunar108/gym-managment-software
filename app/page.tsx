@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import MembersPage from "./members-page";
+import OverviewPage from "./overview-page";
 import MembershipPlansPage from "./membership-plans-page";
 import AttendancePage from "./attendance-page";
 import PaymentsPage from "./payments-page";
@@ -187,82 +188,7 @@ export default function Home() {
         </header>
 
         <div className="page-content">
-          {active === "Members" ? <MembersPage /> : active === "Memberships" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "QR check-in" ? <QRCheckinPage /> : active === "Settings" ? <SettingsPage /> : <>
-          <section className="welcome-row">
-            <div><p className="eyebrow">THURSDAY, NOVEMBER 5, 2026</p><h1>Good morning, Alex <span>✦</span></h1><p className="welcome-subtitle">Here&apos;s what&apos;s happening at your gym today.</p></div>
-            <div className="welcome-actions">
-              <button className="button-secondary" onClick={() => setActive("Reports")}><Download size={16} /> Export report</button>
-              <button className="button-primary" onClick={() => setShowQuickAdd(true)}><Plus size={17} /> Add new</button>
-            </div>
-          </section>
-
-          <section className="metric-grid">
-            <MetricCard title="Total members" value="248" change="+12.8%" note="vs. last month" icon={Users} tone="green" />
-            <MetricCard title="Active members" value="216" change="+8.2%" note="vs. last month" icon={Dumbbell} tone="blue" />
-            <MetricCard title="Collected this month" value="₹1,84,500" change="+14.5%" note="vs. last month" icon={Wallet} tone="purple" />
-            <MetricCard title="Today's attendance" value="42" change="+6.4%" note="vs. yesterday" icon={ClipboardCheck} tone="orange" />
-          </section>
-
-          <section className="content-grid">
-            <div className="panel revenue-panel">
-              <div className="panel-heading">
-                <div><div className="panel-title">Revenue overview</div><p className="panel-subtitle">Track your gym&apos;s financial performance</p></div>
-                <div className="flex items-center gap-2"><div className="chart-legend"><span className="legend-dot income" /> Income <span className="legend-dot expenses-dot" /> Expenses</div><button className="select-button" onClick={() => setPeriod(period === "This month" ? "Last month" : "This month")}>{period}<ChevronDown size={14} /></button></div>
-              </div>
-              <div className="revenue-total"><strong>₹1,84,500</strong><span className="trend-up"><ArrowUpRight size={14} /> 14.5%</span><small>compared to previous month</small></div>
-              <div className="chart-wrap">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueData} margin={{ top: 10, right: 5, left: -20, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#45a767" stopOpacity={0.17} /><stop offset="95%" stopColor="#45a767" stopOpacity={0} /></linearGradient>
-                      <linearGradient id="expenseFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#e5aa69" stopOpacity={0.13} /><stop offset="95%" stopColor="#e5aa69" stopOpacity={0} /></linearGradient>
-                    </defs>
-                    <CartesianGrid stroke="#edf1ed" vertical={false} />
-                    <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: "#9aa49d", fontSize: 11 }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: "#9aa49d", fontSize: 11 }} tickFormatter={(v) => v === 0 ? "0" : `${v / 1000}k`} />
-                    <Tooltip formatter={(value) => [`₹${formatINR(Number(value))}`, ""]} contentStyle={{ border: "1px solid #e9eee9", borderRadius: 12, fontSize: 12, boxShadow: "0 8px 24px #17211c12" }} />
-                    <Area type="monotone" dataKey="income" stroke="#329653" strokeWidth={2.5} fill="url(#incomeFill)" />
-                    <Area type="monotone" dataKey="expenses" stroke="#e5aa69" strokeWidth={2} fill="url(#expenseFill)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-
-            <div className="panel attendance-panel">
-              <div className="panel-heading"><div><div className="panel-title">Attendance today</div><p className="panel-subtitle">Live check-in activity</p></div><button className="icon-button small" aria-label="More attendance options"><MoreHorizontal size={19} /></button></div>
-              <div className="attendance-summary"><div className="attendance-number">42<span> / 216</span></div><span className="attendance-pill"><span /> Members present</span></div>
-              <div className="attendance-progress"><div style={{ width: "19.4%" }} /></div>
-              <div className="attendance-meta"><span>19.4% of active members</span><span>Peak: 7–9 AM</span></div>
-              <div className="list-divider" />
-              <div className="flex items-center justify-between mb-3"><p className="small-heading">Recent check-ins</p><button className="text-link" onClick={() => setActive("Attendance")}>View all</button></div>
-              <div className="checkin-list">
-                {checkins.map((person) => <div className="checkin-row" key={person.name}><div className="mini-avatar">{person.initials}</div><div className="min-w-0 flex-1"><p className="row-name">{person.name}</p><p className="row-muted">{person.type}</p></div><span className="checkin-time">{person.time}</span></div>)}
-              </div>
-              <button className="scan-button" onClick={() => setActive("QR check-in")}><QrCode size={16} /> Open QR scanner <ChevronRight size={15} /></button>
-            </div>
-          </section>
-
-          <section className="lower-grid">
-            <div className="panel members-panel">
-              <div className="panel-heading"><div><div className="panel-title">Recent members</div><p className="panel-subtitle">Your latest member registrations</p></div><button className="text-link" onClick={() => setActive("Members")}>View all members <ChevronRight size={14} /></button></div>
-              <div className="table-toolbar"><div className="table-search"><Search size={15} /><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search members..." /></div><button className="filter-button"><SlidersHorizontal size={15} /> Filter</button></div>
-              <div className="table-scroll"><table className="members-table"><thead><tr><th>MEMBER</th><th>PLAN</th><th>JOINED</th><th>AMOUNT</th><th>STATUS</th><th /></tr></thead><tbody>
-                {filteredMembers.map((member) => <tr key={member.name}><td><div className="member-cell"><div className={`member-avatar ${member.color}`}>{member.initials}</div><span>{member.name}</span></div></td><td>{member.plan}</td><td>{member.date}</td><td className="amount-cell">{member.amount}</td><td><span className={`status-badge ${member.status === "Active" ? "status-active" : "status-pending"}`}>{member.status}</span></td><td><button className="icon-button tiny" aria-label={`More options for ${member.name}`}><MoreHorizontal size={17} /></button></td></tr>)}
-                {filteredMembers.length === 0 && <tr><td colSpan={6} className="empty-row">No members match your search.</td></tr>}
-              </tbody></table></div>
-            </div>
-
-            <div className="panel expiry-panel">
-              <div className="panel-heading"><div><div className="panel-title">Memberships expiring</div><p className="panel-subtitle">Members who need a renewal</p></div><span className="expiry-count">3</span></div>
-              <div className="expiry-list">
-                {expiries.map((item) => <div className="expiry-row" key={item.name}><div className={`expiry-icon ${item.tone}`}><CalendarClock size={17} /></div><div className="min-w-0 flex-1"><p className="row-name">{item.name}</p><p className="row-muted">{item.plan}</p></div><div className="text-right"><p className={`expiry-date ${item.tone}`}>{item.days}</p><button className="renew-link" onClick={() => setActive("Memberships")}>Renew</button></div></div>)}
-              </div>
-              <button className="view-expiry" onClick={() => setActive("Memberships")}>View all expiring memberships <ChevronRight size={14} /></button>
-            </div>
-          </section>
-
-          <footer className="footer"><span>© 2026 GymDesk. Built for your gym.</span><span><span className="online-dot" /> All systems operational</span></footer>
-        </>}
+          {active === "Members" ? <MembersPage /> : active === "Memberships" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "QR check-in" ? <QRCheckinPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />
         </div>
       </main>
 
