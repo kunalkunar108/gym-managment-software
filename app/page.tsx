@@ -220,7 +220,7 @@ export default function Home() {
         </header>
 
         <div className="page-content">
-          {active === "Admissions" ? <AdmissionsPage /> : active === "Members" ? <MembersPage onAddMember={() => setActive("Admissions")} /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
+          {selectedMemberId && gymOwnerId ? <MemberProfile memberId={selectedMemberId} ownerId={gymOwnerId} isTrainer={false} onBack={() => setSelectedMemberId(null)} /> : active === "Admissions" ? <AdmissionsPage /> : active === "Members" ? <MembersPage onAddMember={() => setActive("Admissions")} /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
         </div>
       </main>
 
