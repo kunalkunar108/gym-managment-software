@@ -5,6 +5,7 @@ import { CalendarClock, ChevronRight, RefreshCw, Search, UserRoundPlus, Users, L
 import { supabase } from "../lib/supabase";
 import SignOutButton from "./sign-out-button";
 import AdmissionsPage from "./admissions-page";
+import MemberProfile from "./member-profile";
 
 type Member = { id: string; full_name: string; phone: string | null; status: string; joined_on: string; photo_path: string | null; photo_url?: string | null };
 type ExpiringMembership = { id: string; member_id: string; end_date: string; status: string };
@@ -15,6 +16,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   const [members, setMembers] = useState<Member[]>([]);
   const [expiring, setExpiring] = useState<ExpiringMembership[]>([]);
   const [query, setQuery] = useState("");
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [view, setView] = useState<"overview" | "admissions" | "members">("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -70,7 +72,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
       </header>
 
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div><p className="text-xs font-semibold tracking-[.14em] text-[#8a968e]">{new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date()).toUpperCase()}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{view === "overview" ? "Trainer overview" : view === "admissions" ? "Admissions & renewals" : "Member directory"}</h1><p className="mt-2 text-sm text-[#7b887f]">Manage member activity, admissions and follow-ups.</p></div>
+        <div><p className="text-xs font-semibold tracking-[.14em] text-[#8a968e]">{new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date()).toUpperCase()}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{view === "overview" ? "Trainer overview" : view === "admissions" ? "Admissions & renewals" : selectedMemberId ? "Member profile" : "Member directory"}</h1><p className="mt-2 text-sm text-[#7b887f]">Manage member activity, admissions and follow-ups.</p></div>
         <button onClick={() => void loadDashboard()} className="inline-flex items-center gap-2 rounded-xl border border-[#e3eae3] bg-white px-4 py-2.5 text-sm font-medium text-[#536158] hover:bg-[#f9fbf9]"><RefreshCw size={15}/> Refresh data</button>
       </div>
 
@@ -106,9 +108,9 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
           <button onClick={() => setView("admissions")} className="flex items-center justify-between rounded-2xl bg-[#278348] p-5 text-left text-white shadow-sm transition hover:bg-[#216f3d]"><span className="flex items-center gap-3"><span className="rounded-xl bg-white/15 p-3"><UserRoundPlus size={21}/></span><span><strong className="block text-sm">Create admission or renewal</strong><small className="mt-1 block text-xs text-white/75">Register a new or returning member</small></span></span><ChevronRight size={19}/></button>
           <button onClick={() => setView("members")} className="flex items-center justify-between rounded-2xl border border-[#e5ebe5] bg-white p-5 text-left transition hover:bg-[#fbfcfb]"><span className="flex items-center gap-3"><span className="rounded-xl bg-[#edf5ff] p-3 text-[#4c83bd]"><Users size={21}/></span><span><strong className="block text-sm">Find a member</strong><small className="mt-1 block text-xs text-[#8a968e]">Search member names and phone numbers</small></span></span><ChevronRight size={19} className="text-[#8a968e]"/></button>
         </section>
-      </> : <section className="overflow-hidden rounded-2xl border border-[#e5ebe5] bg-white">
+      </> : selectedMemberId ? <MemberProfile memberId={selectedMemberId} ownerId={ownerId} isTrainer={true} onBack={() => setSelectedMemberId(null)} /> : <section className="overflow-hidden rounded-2xl border border-[#e5ebe5] bg-white">
         <div className="border-b border-[#edf1ed] p-5"><h2 className="font-semibold">All gym members</h2><p className="mt-1 text-xs text-[#8a968e]">Search member records and contact details</p><div className="mt-4 flex items-center gap-2 rounded-xl border border-[#e5ebe5] px-3"><Search size={16} className="text-[#8a968e]"/><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search name or phone number" className="h-11 min-w-0 flex-1 text-sm outline-none"/></div></div>
-        {loading ? <p className="py-10 text-center text-sm text-[#8a968e]">Loading members…</p> : <div className="divide-y divide-[#edf1ed]">{filteredMembers.map(member => <div key={member.id} className="flex items-center justify-between gap-3 px-5 py-3.5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e8f5eb] text-xs font-semibold text-[#278348]">{member.photo_url ? <img src={member.photo_url} alt="" className="h-full w-full object-cover"/> : initials(member.full_name)}</div><div className="min-w-0"><p className="truncate text-sm font-semibold">{member.full_name}</p><p className="text-xs text-[#8a968e]">{member.phone || "No phone number"} · {member.status}</p></div></div>{member.phone && <a href={"tel:" + member.phone} aria-label={"Call " + member.full_name} className="rounded-xl border border-[#dceee0] p-2.5 text-[#278348] hover:bg-[#e8f5eb]"><Phone size={17}/></a>}</div>)}{filteredMembers.length === 0 && <p className="py-10 text-center text-sm text-[#8a968e]">No matching members.</p>}</div>}
+        {loading ? <p className="py-10 text-center text-sm text-[#8a968e]">Loading members…</p> : <div className="divide-y divide-[#edf1ed]">{filteredMembers.map(member => <div key={member.id} className="flex items-center justify-between gap-3 px-5 py-3.5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e8f5eb] text-xs font-semibold text-[#278348]">{member.photo_url ? <img src={member.photo_url} alt="" className="h-full w-full object-cover"/> : initials(member.full_name)}</div><div className="min-w-0"><button onClick={() => setSelectedMemberId(member.id)} className="block min-w-0 text-left"><p className="truncate text-sm font-semibold">{member.full_name}</p><p className="text-xs text-[#8a968e]">{member.phone || "No phone number"} · {member.status}</p></button></div></div>{member.phone && <a href={"tel:" + member.phone} aria-label={"Call " + member.full_name} className="rounded-xl border border-[#dceee0] p-2.5 text-[#278348] hover:bg-[#e8f5eb]"><Phone size={17}/></a>}</div>)}{filteredMembers.length === 0 && <p className="py-10 text-center text-sm text-[#8a968e]">No matching members.</p>}</div>}
       </section>}
       <footer className="mt-8 flex flex-wrap items-center justify-between gap-2 text-xs text-[#9aa49d]"><span>GymDesk · Trainer workspace</span><span className="inline-flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[#329653]"/> Member data synced</span></footer>
     </div>
