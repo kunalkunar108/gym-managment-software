@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
       return respond({ error: "Only the gym owner can manage trainer accounts." }, 403);
     }
 
-    const { staff_id, action } = await req.json();
+    const { staff_id, action, password } = await req.json();
     if (!staff_id || !["invite", "remove"].includes(action)) return respond({ error: "Invalid request." }, 400);
 
     const admin = createClient(url, serviceKey);
@@ -45,11 +45,17 @@ Deno.serve(async (req) => {
       if (staff.user_id) return respond({ error: "This trainer already has a login account." }, 409);
 
       const appUrl = Deno.env.get("APP_URL") || "https://gym-managment-software-ecru.vercel.app";
-      const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(staff.email, {
-        data: { full_name: staff.full_name, account_type: "trainer" },
-        redirectTo: appUrl,
-      });
-      if (inviteError || !invited.user) return respond({ error: inviteError?.message || "Could not send invitation." }, 400);
+      if (password !== undefined && (typeof password !== "string" || password.length < 8)) {
+        return respond({ error: "Trainer password must be at least 8 characters." }, 400);
+      }
+      const userMetadata = { full_name: staff.full_name, account_type: "trainer" };
+      const { data: invited, error: inviteError } = password
+        ? await admin.auth.admin.createUser({ email: staff.email, password, email_confirm: true, user_metadata: userMetadata })
+        : await admin.auth.admin.inviteUserByEmail(staff.email, {
+            data: userMetadata,
+            redirectTo: appUrl,
+          });
+      if (inviteError || !invited.user) return respond({ error: inviteError?.message || "Could not create trainer login." }, 400);
 
       const { error: linkError } = await admin.from("staff").update({ user_id: invited.user.id })
         .eq("id", staff.id).eq("owner_id", ownerId);
@@ -57,7 +63,7 @@ Deno.serve(async (req) => {
         await admin.auth.admin.deleteUser(invited.user.id);
         return respond({ error: "Invitation could not be linked to the trainer record: " + linkError.message }, 500);
       }
-      return respond({ message: "Trainer invitation sent to " + staff.email + "." });
+      return respond({ message: password ? "Trainer login created for " + staff.email + "." : "Trainer invitation sent to " + staff.email + "." });
     }
 
     if (action === "remove") {
