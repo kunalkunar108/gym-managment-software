@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Search, Plus, SlidersHorizontal, X, IndianRupee, CreditCard, Wallet, Smartphone, Building2, Printer, CheckCircle2, Clock3, Eye, Check, ReceiptText, LoaderCircle, RefreshCw } from "lucide-react";
-import { supabase } from "../lib/supabase";
+import { supabase } from "../lib/supabase";\nimport { openMemberProfile } from "../lib/member-navigation";
 
 type Method = "cash" | "upi" | "card" | "bank_transfer";
 type Status = "paid" | "pending" | "failed" | "refunded";
@@ -104,7 +104,7 @@ export default function PaymentsPage() {
       {error && <p role="alert" className="mx-1 mb-3 rounded-xl bg-[#fff0ef] px-4 py-3 text-sm text-[#b33b32]">{error}</p>}
       <div className="table-scroll"><table className="members-table payments-table"><thead><tr><th>MEMBER</th><th>RECEIPT ID</th><th>DATE</th><th>METHOD</th><th>AMOUNT</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>
         {loading ? <tr><td colSpan={7} className="empty-row"><LoaderCircle size={16} className="inline animate-spin mr-2"/>Loading payments…</td></tr> : filtered.map(p => { const Icon = methodIcon(p.method); return <tr key={p.id}>
-          <td><div className="payment-member"><span className="member-avatar mint">{p.member.split(" ").map(x => x[0]).slice(0,2).join("").toUpperCase()}</span><span>{p.member}<small>{p.phone}</small></span></div></td>
+          <td><div className="payment-member"><span className="member-avatar mint">{p.member.split(" ").map(x => x[0]).slice(0,2).join("").toUpperCase()}</span><span><button type="button" disabled={!p.memberId} onClick={() => p.memberId && openMemberProfile(p.memberId)} className="text-left font-semibold text-[#278348] hover:underline disabled:text-inherit disabled:no-underline">{p.member}</button><small>{p.phone}</small></span></div></td>
           <td className="payment-receipt-id">{p.receipt}</td><td>{prettyDate(p.date)}</td>
           <td><span className="payment-method"><Icon size={14}/>{methodLabel(p.method)}</span></td><td className="amount-cell">{money(p.amount)}</td>
           <td><span className={`status-badge ${p.status === "paid" ? "status-active" : p.status === "pending" ? "status-pending" : "status-expired"}`}>{statusLabel(p.status)}</span></td>
