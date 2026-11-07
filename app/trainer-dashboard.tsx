@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search, Users, UserRoundPlus, RefreshCw, CalendarClock } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import SignOutButton from "./sign-out-button";
@@ -22,13 +22,17 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
 
   async function loadExpiring() {
     setExpiryLoading(true); setExpiryError("");
-    const { data, error: rpcError } = await supabase.rpc("trainer_list_expiring_memberships");
+    const [{ data, error: rpcError }, { data: memberRows }] = await Promise.all([
+      supabase.rpc("trainer_list_expiring_memberships"),
+      supabase.from("members").select("id,full_name,phone,status").eq("owner_id", ownerId).order("full_name")
+    ]);
     if (rpcError) setExpiryError(rpcError.message);
     setExpiring((data ?? []) as ExpiringMembership[]);
+    if (memberRows) setMembers(memberRows as Member[]);
     setExpiryLoading(false);
   }
 
-  useState(() => { void loadExpiring(); return undefined; });
+  useEffect(() => { void loadExpiring(); }, []);
 
   async function loadMembers() {
     setLoading(true); setError("");
