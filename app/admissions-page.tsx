@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, LoaderCircle, RefreshCw, Camera, UserRound } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { openMemberProfile } from "../lib/member-navigation";
 
 type Plan = { id: string; name: string; duration_months: number; price?: number; is_active?: boolean };
 type Member = { id: string; full_name: string; phone: string; secondary_phone: string | null; gender: string | null; address: string | null; photo_path: string | null };
@@ -190,7 +191,7 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
       <div className="p-5 border-b border-[#edf0ed]"><div className="flex flex-wrap gap-2"><button type="button" className={kind==="new"?"button-primary":"button-secondary"} onClick={() => changeKind("new")}>New admission</button><button type="button" className={kind==="re"?"button-primary":"button-secondary"} onClick={() => changeKind("re")}>Re-admission</button></div></div>
       <form className="p-5 space-y-6" onSubmit={submit}>
         <section className="space-y-3"><div><h2 className="panel-title">1. Member details</h2><p className="panel-subtitle">Basic identity and contact information.</p></div>
-          {kind==="re" && <label className="block text-sm font-medium">Find existing member by mobile number or name<select className="mt-1 w-full" value={form.memberId} onChange={e=>chooseMember(e.target.value)} required><option value="">Select existing member</option>{members.map(m=><option key={m.id} value={m.id}>{m.full_name} — {m.phone}</option>)}</select></label>}
+          {kind==="re" && <label className="block text-sm font-medium">Find existing member by mobile number or name<select className="mt-1 w-full" value={form.memberId} onChange={e=>chooseMember(e.target.value)} required><option value="">Select existing member</option>{members.map(m=><option key={m.id} value={m.id}>{m.full_name} — {m.phone}</option>)}</select>{form.memberId && <button type="button" onClick={()=>openMemberProfile(form.memberId)} className="mt-2 text-xs font-semibold text-[#278348] hover:underline">Open selected member profile</button>}</label>}
           <div className="member-form-grid">
             <label>Full name *<input required value={form.fullName} onChange={e=>setForm({...form,fullName:e.target.value})} placeholder="Member full name"/></label>
             <label>Mobile number *<input required type="tel" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})} placeholder="Mobile number"/></label>
@@ -216,7 +217,7 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
                   </div>
                   <div className="rounded-xl bg-[#f7f9f7] p-4 text-sm space-y-2"><div className="flex justify-between"><span>Plan price</span><strong>{money(baseAmount)}</strong></div><div className="flex justify-between"><span>Discount ({discount}%)</span><strong>− {money(baseAmount-discountedPlanAmount)}</strong></div><div className="flex justify-between"><span>Discounted membership</span><strong>{money(discountedPlanAmount)}</strong></div><div className="flex justify-between"><span>Admission fee</span><strong>{money(admissionFee)}</strong></div><div className="flex justify-between border-t border-[#e6ebe6] pt-2"><strong>Total payable</strong><strong>{money(total)}</strong></div></div>
                 </section>
-        {phoneMatches.length>0 && kind==="new" && <p className="rounded-xl bg-[#fff8e8] p-3 text-sm text-[#805b17]">A member with a similar mobile number may already exist: {phoneMatches.slice(0,3).map(m=>m.full_name+" ("+m.phone+")").join(", ")}. Switch to Re-admission if this is the same person.</p>}
+        {phoneMatches.length>0 && kind==="new" && <p className="rounded-xl bg-[#fff8e8] p-3 text-sm text-[#805b17]">A member with a similar mobile number may already exist: {phoneMatches.slice(0,3).map((m,i)=><span key={m.id}>{i>0 ? ", " : ""}<button type="button" onClick={()=>openMemberProfile(m.id)} className="font-semibold underline">{m.full_name}</button>{" ("+m.phone+")"}</span>)}. Switch to Re-admission if this is the same person.</p>}
         {error && <p role="alert" className="rounded-xl bg-[#fff0ef] p-3 text-sm text-[#b33b32]">{error}</p>}
         {success && <p role="status" className="rounded-xl bg-[#edf8f0] p-3 text-sm text-[#246b3a]">{success}</p>}
         {plans.length===0 && !loading && <p className="text-sm text-[#9a5b16]">No active membership plans found. Create a plan in Membership Plans before recording an admission.</p>}
