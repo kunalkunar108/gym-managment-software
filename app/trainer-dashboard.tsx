@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Users, UserRoundPlus, RefreshCw } from "lucide-react";
+import { Search, Users, UserRoundPlus, RefreshCw, CalendarClock } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import SignOutButton from "./sign-out-button";
 import AdmissionsPage from "./admissions-page";
 
 type Member = { id: string; full_name: string; phone: string | null; status: string };
+type ExpiringMembership = { id: string; member_id: string; end_date: string; status: string };
+const dateLabel = (value: string) => new Date(value + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
 
 export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   const [members, setMembers] = useState<Member[]>([]);
@@ -14,6 +16,19 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   const [view, setView] = useState<"admissions" | "members">("admissions");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [expiring, setExpiring] = useState<ExpiringMembership[]>([]);
+  const [expiryLoading, setExpiryLoading] = useState(true);
+  const [expiryError, setExpiryError] = useState("");
+
+  async function loadExpiring() {
+    setExpiryLoading(true); setExpiryError("");
+    const { data, error: rpcError } = await supabase.rpc("trainer_list_expiring_memberships");
+    if (rpcError) setExpiryError(rpcError.message);
+    setExpiring((data ?? []) as ExpiringMembership[]);
+    setExpiryLoading(false);
+  }
+
+  useState(() => { void loadExpiring(); return undefined; });
 
   async function loadMembers() {
     setLoading(true); setError("");
@@ -32,7 +47,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
         <div className="flex items-center gap-3"><span className="rounded-full bg-[#e8f5eb] px-3 py-2 text-xs font-semibold text-[#278348]">Trainer account</span><SignOutButton /></div>
       </header>
       <div className="mb-6"><p className="text-sm text-[#7b887f]">Gym reception</p><h1 className="mt-1 text-3xl font-semibold">Trainer dashboard</h1><p className="mt-2 text-sm text-[#7b887f]">Handle member admissions and enquiries. All payments remain owner-only.</p></div>
-      <section className="mb-6 grid gap-4 sm:grid-cols-2">
+      <section className="mb-6 rounded-2xl border border-[#e5ebe5] bg-white p-5">\n        <div className="mb-4 flex items-center justify-between"><div><h2 className="font-semibold">Memberships expiring</h2><p className="text-xs text-[#8a968e]">Active memberships ending in the next 7 days</p></div><button onClick={() => void loadExpiring()} className="rounded-lg p-2 text-[#718077]" aria-label="Refresh expiring memberships"><RefreshCw size={16}/></button></div>\n        {expiryError && <p role="alert" className="mb-3 rounded-xl bg-[#fff0ef] px-4 py-3 text-sm text-[#b33b32]">{expiryError}</p>}\n        {expiryLoading ? <p className="py-5 text-center text-sm text-[#8a968e]">Loading expiring memberships…</p> : expiring.length === 0 ? <p className="py-5 text-center text-sm text-[#8a968e]">No memberships expiring in the next 7 days.</p> : <div className="divide-y divide-[#edf1ed]">{expiring.map(item => { const member = members.find(m => m.id === item.member_id); return <div key={item.id} className="flex items-center justify-between gap-3 py-3"><div className="flex min-w-0 items-center gap-3"><CalendarClock size={18} className="shrink-0 text-[#c18a35]"/><div className="min-w-0"><p className="truncate text-sm font-medium">{member?.full_name ?? "Member"}</p><p className="text-xs text-[#8a968e]">Active membership</p></div></div><span className="shrink-0 text-xs font-semibold text-[#b77925]">{item.end_date === new Date().toISOString().slice(0,10) ? "Expires today" : `Expires ${dateLabel(item.end_date)}`}</span></div>; })}</div>}\n      </section>\n      <section className="mb-6 grid gap-4 sm:grid-cols-2">
         <button onClick={() => setView("admissions")} className={`flex items-center gap-3 rounded-2xl border bg-white p-5 text-left ${view === "admissions" ? "border-[#329653] ring-1 ring-[#329653]" : "border-[#e5ebe5]"}`}>
           <UserRoundPlus className="text-[#329653]" size={22}/><span><strong className="block">Admissions & renewals</strong><small className="text-[#7b887f]">Register new or returning members</small></span>
         </button>
