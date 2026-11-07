@@ -15,7 +15,10 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
   const [kind, setKind] = useState<"new" | "re">("new");
   const [form, setForm] = useState(initial);
   const [members, setMembers] = useState<Member[]>([]);
-  const [plans, setPlans] = useState<Plan[]>([]);\n  const [gymOwnerId, setGymOwnerId] = useState<string | null>(null);\n  const [photoFile, setPhotoFile] = useState<File | null>(null);\n  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [gymOwnerId, setGymOwnerId] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -36,7 +39,8 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
       if (!auth.user) throw new Error("Your session has expired. Please log in again.");
       const { data: gymOwnerId, error: ownerError } = await supabase.rpc("current_gym_owner_id");
       if (ownerError) throw ownerError;
-      if (!gymOwnerId) throw new Error("Your gym account could not be identified.");\n      setGymOwnerId(gymOwnerId);
+      if (!gymOwnerId) throw new Error("Your gym account could not be identified.");
+      setGymOwnerId(gymOwnerId);
       const [m, p] = await Promise.all([
         supabase.from("members").select("id,full_name,phone,secondary_phone,gender,address,photo_path").eq("owner_id", gymOwnerId).order("full_name"),
         trainerMode
@@ -57,7 +61,9 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
   }
   async function chooseMember(id: string) {
     const m = members.find(x => x.id === id);
-    setForm(old => ({ ...old, memberId: id, fullName: m?.full_name ?? "", phone: m?.phone ?? "", secondaryPhone: m?.secondary_phone ?? "", gender: m?.gender ?? "male", address: m?.address ?? "" }));\n    setPhotoFile(null); setPhotoPreview(null);\n    if (m?.photo_path) { const { data } = await supabase.storage.from("member-photos").createSignedUrl(m.photo_path, 3600); setPhotoPreview(data?.signedUrl ?? null); }
+    setForm(old => ({ ...old, memberId: id, fullName: m?.full_name ?? "", phone: m?.phone ?? "", secondaryPhone: m?.secondary_phone ?? "", gender: m?.gender ?? "male", address: m?.address ?? "" }));
+    setPhotoFile(null); setPhotoPreview(null);
+    if (m?.photo_path) { const { data } = await supabase.storage.from("member-photos").createSignedUrl(m.photo_path, 3600); setPhotoPreview(data?.signedUrl ?? null); }
   }
   function choosePlan(id: string) {
     const p = plans.find(x => x.id === id);
@@ -74,8 +80,9 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
     if (Number(form.discount) < 0 || Number(form.discount) >= 100) { setError("Discount must be between 0 and 99.99%."); return; }
     setSaving(true);
     try {
+      let admissionData: { member_id?: string; receipt_number?: string } | null = null;
       if (trainerMode) {
-        const { error: rpcError } = await supabase.rpc("trainer_complete_admission", {
+        const { data, error: rpcError } = await supabase.rpc("trainer_complete_admission", {
           p_admission_type: kind, p_member_id: kind === "re" ? form.memberId : null,
           p_full_name: form.fullName.trim(), p_phone: form.phone.trim(), p_gender: form.gender,
           p_address: form.address.trim() || null, p_secondary_phone: form.secondaryPhone.trim() || null,
@@ -83,7 +90,7 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
           p_discount_percent: discount, p_admission_fee: admissionFee, p_suggested_payment_method: form.method
         });
         if (rpcError) throw rpcError;
-        setSuccess("Admission saved. The owner must review the suggested payment method and record any payment.");
+        admissionData = data as { member_id?: string } | null;
       } else {
         const { data, error: rpcError } = await supabase.rpc("complete_admission", {
           p_admission_type: kind, p_member_id: kind === "re" ? form.memberId : null,
@@ -94,12 +101,43 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
           p_payment_method: form.method
         });
         if (rpcError) throw rpcError;
-        const result = data as { receipt_number?: string };
-        setSuccess(`Admission saved successfully. ${result?.receipt_number ? "Receipt: " + result.receipt_number : "No payment receipt was created because the total payable is zero."}`);
+        admissionData = data as { member_id?: string; receipt_number?: string } | null;
       }
-      let photoMessage = "";\n      if (photoFile && admissionData?.member_id && gymOwnerId) {\n        try {\n          if (!["image/jpeg", "image/png", "image/webp"].includes(photoFile.type)) throw new Error("Use a JPEG, PNG, or WebP camera photo.");\n          if (photoFile.size > 5 * 1024 * 1024) throw new Error("Photo must be 5 MB or smaller.");\n          const extension = photoFile.type === "image/png" ? "png" : photoFile.type === "image/webp" ? "webp" : "jpg";\n          const path = `${gymOwnerId}/${admissionData.member_id}/${crypto.randomUUID()}.${extension}`;\n          const { error: uploadError } = await supabase.storage.from("member-photos").upload(path, photoFile, { contentType: photoFile.type, upsert: false });\n          if (uploadError) throw uploadError;\n          if (trainerMode) {\n            const { error: savePathError } = await supabase.rpc("trainer_set_member_photo_path", { p_member_id: admissionData.member_id, p_photo_path: path });\n            if (savePathError) throw savePathError;\n          } else {\n            const { error: savePathError } = await supabase.from("members").update({ photo_path: path }).eq("id", admissionData.member_id).eq("owner_id", gymOwnerId);\n            if (savePathError) throw savePathError;\n          }\n        } catch (photoError) { photoMessage = ` Admission saved, but the photo could not be saved: ${photoError instanceof Error ? photoError.message : "Please try again."}`; }\n      }\n      const receipt = (admissionData as { receipt_number?: string } | null)?.receipt_number;\n      setSuccess(`${trainerMode ? "Admission saved. The owner must review the suggested payment method and record any payment." : `Admission saved successfully. ${receipt ? "Receipt: " + receipt : "No payment receipt was created because the total payable is zero."}`}${photoMessage}`);\n      setForm(initial); setKind("new"); setPhotoFile(null); setPhotoPreview(null); await load();
-    } catch (e) { setError(e instanceof Error ? e.message : "Could not complete admission."); }
-    finally { setSaving(false); }
+
+      let photoMessage = "";
+      if (photoFile && admissionData?.member_id && gymOwnerId) {
+        try {
+          if (!["image/jpeg", "image/png", "image/webp"].includes(photoFile.type)) throw new Error("Use a JPEG, PNG, or WebP camera photo.");
+          if (photoFile.size > 5 * 1024 * 1024) throw new Error("Photo must be 5 MB or smaller.");
+          const extension = photoFile.type === "image/png" ? "png" : photoFile.type === "image/webp" ? "webp" : "jpg";
+          const path = `${gymOwnerId}/${admissionData.member_id}/${crypto.randomUUID()}.${extension}`;
+          const { error: uploadError } = await supabase.storage.from("member-photos").upload(path, photoFile, { contentType: photoFile.type, upsert: false });
+          if (uploadError) throw uploadError;
+          if (trainerMode) {
+            const { error: savePathError } = await supabase.rpc("trainer_set_member_photo_path", { p_member_id: admissionData.member_id, p_photo_path: path });
+            if (savePathError) throw savePathError;
+          } else {
+            const { error: savePathError } = await supabase.from("members").update({ photo_path: path }).eq("id", admissionData.member_id).eq("owner_id", gymOwnerId);
+            if (savePathError) throw savePathError;
+          }
+        } catch (photoError) {
+          photoMessage = ` Admission saved, but the photo could not be saved: ${photoError instanceof Error ? photoError.message : "Please try again."}`;
+        }
+      } else if (photoFile && !admissionData?.member_id) {
+        photoMessage = " Admission saved, but no member ID was returned, so the photo was not saved.";
+      }
+
+      const receipt = admissionData?.receipt_number;
+      const admissionMessage = trainerMode
+        ? "Admission saved. The owner must review the suggested payment method and record any payment."
+        : `Admission saved successfully. ${receipt ? "Receipt: " + receipt : "No payment receipt was created because the total payable is zero."}`;
+      setSuccess(admissionMessage + photoMessage);
+      setForm(initial); setKind("new"); setPhotoFile(null); setPhotoPreview(null); await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not complete admission.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   return <div className="members-page">
@@ -117,7 +155,8 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
             <label className="payment-note-field">Address<input value={form.address} onChange={e=>setForm({...form,address:e.target.value})} placeholder="Member address"/></label>
           </div>
         </section>
-        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">Member photo</h2><p className="panel-subtitle">Take a photo using the device camera. It will be saved to this member’s profile for future identification.</p></div><div className="flex flex-wrap items-center gap-4"><div className="h-24 w-24 overflow-hidden rounded-xl bg-[#f0f4f0] flex items-center justify-center">{photoPreview ? <img src={photoPreview} alt="Member photo preview" className="h-full w-full object-cover"/> : <UserRound size={34} className="text-[#9aa79d]"/>}</div><label className="button-secondary cursor-pointer"><Camera size={16}/> {photoPreview ? "Retake photo" : "Take photo"}<input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={e=>{const file=e.target.files?.[0]; if(file){setPhotoFile(file);setPhotoPreview(URL.createObjectURL(file));} e.currentTarget.value="";}} /></label>{photoFile && <span className="text-xs text-[#66736a]">New photo ready to save</span>}</div></section>\n        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">2. Membership details</h2><p className="panel-subtitle">Choose a plan, dates, and applicable discount.</p></div>
+        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">Member photo</h2><p className="panel-subtitle">Take a photo using the device camera. It will be saved to this member’s profile for future identification.</p></div><div className="flex flex-wrap items-center gap-4"><div className="h-24 w-24 overflow-hidden rounded-xl bg-[#f0f4f0] flex items-center justify-center">{photoPreview ? <img src={photoPreview} alt="Member photo preview" className="h-full w-full object-cover"/> : <UserRound size={34} className="text-[#9aa79d]"/>}</div><label className="button-secondary cursor-pointer"><Camera size={16}/> {photoPreview ? "Retake photo" : "Take photo"}<input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={e=>{const file=e.target.files?.[0]; if(file){setPhotoFile(file);setPhotoPreview(URL.createObjectURL(file));} e.currentTarget.value="";}} /></label>{photoFile && <span className="text-xs text-[#66736a]">New photo ready to save</span>}</div></section>
+        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">2. Membership details</h2><p className="panel-subtitle">Choose a plan, dates, and applicable discount.</p></div>
           <div className="member-form-grid">
             <label>Membership plan *<select required value={form.planId} onChange={e=>choosePlan(e.target.value)}><option value="">Select plan</option>{plans.map(p=><option key={p.id} value={p.id}>{p.name}{" · " + money(Number(p.price))} / {p.duration_months} months</option>)}</select></label>
             <label>Start date *<input required type="date" value={form.startDate} onChange={e=>chooseStart(e.target.value)}/></label>
