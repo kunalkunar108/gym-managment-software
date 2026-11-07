@@ -5,7 +5,8 @@ import { CalendarClock, ChevronRight, RefreshCw, Search, UserRoundPlus, Users, L
 import { supabase } from "../lib/supabase";
 import SignOutButton from "./sign-out-button";
 import AdmissionsPage from "./admissions-page";
-import MemberProfile from "./member-profile";\nimport { openMemberProfile } from "../lib/member-navigation";
+import MemberProfile from "./member-profile";
+import { openMemberProfile } from "../lib/member-navigation";
 
 type Member = { id: string; full_name: string; phone: string | null; status: string; joined_on: string; photo_path: string | null; photo_url?: string | null };
 type ExpiringMembership = { id: string; member_id: string; end_date: string; status: string };
@@ -42,7 +43,16 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
     setLoading(false);
   }
 
-  useEffect(() => { void loadDashboard(); }, [ownerId]);\n\n  useEffect(() => {\n    const handleOpenMember = (event: Event) => {\n      const memberId = (event as CustomEvent<{ memberId?: string }>).detail?.memberId;\n      if (memberId) { setSelectedMemberId(memberId); setView("members"); }\n    };\n    window.addEventListener("gymdesk:open-member-profile", handleOpenMember);\n    return () => window.removeEventListener("gymdesk:open-member-profile", handleOpenMember);\n  }, []);
+  useEffect(() => { void loadDashboard(); }, [ownerId]);
+
+  useEffect(() => {
+    const handleOpenMember = (event: Event) => {
+      const memberId = (event as CustomEvent<{ memberId?: string }>).detail?.memberId;
+      if (memberId) { setSelectedMemberId(memberId); setView("members"); }
+    };
+    window.addEventListener("gymdesk:open-member-profile", handleOpenMember);
+    return () => window.removeEventListener("gymdesk:open-member-profile", handleOpenMember);
+  }, []);
 
   const activeMembers = members.filter(member => member.status === "active").length;
   const newThisMonth = members.filter(member => {
