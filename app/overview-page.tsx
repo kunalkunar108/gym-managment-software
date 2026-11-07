@@ -31,13 +31,20 @@ export default function OverviewPage({ onNavigate }: { onNavigate: (page: string
         const {data: auth,error: authError} = await supabase.auth.getUser();
         if(authError) throw authError;
         if(!auth.user) throw new Error("Your session has expired. Please log in again.");
+        const {data: ownerId, error: ownerIdError} = await supabase.rpc("current_gym_owner_id");
+        if(ownerIdError || !ownerId) throw ownerIdError ?? new Error("Could not identify this gym account.");
+        const {data: ownerRole, error: ownerRoleError} = await supabase.rpc("is_gym_owner");
+        if(ownerRoleError) throw ownerRoleError;
         const today = dateKey(new Date());
         const until = new Date(); until.setDate(until.getDate()+7);
+        const expiryRequest = ownerRole
+          ? supabase.from("memberships").select("id,member_id,end_date,status").eq("owner_id",ownerId).eq("status","active").gte("end_date",today).lte("end_date",dateKey(until)).order("end_date",{ascending:true})
+          : supabase.rpc("trainer_list_expiring_memberships");
         const [m,p,e,x] = await Promise.all([
-          supabase.from("members").select("id,full_name,joined_on,status").eq("owner_id",auth.user.id).order("created_at",{ascending:false}),
-          supabase.from("payments").select("amount,paid_on,status").eq("owner_id",auth.user.id).eq("status","paid"),
-          supabase.from("expenses").select("amount,spent_on").eq("owner_id",auth.user.id),
-          supabase.from("memberships").select("id,member_id,end_date,status").eq("owner_id",auth.user.id).eq("status","active").gte("end_date",today).lte("end_date",dateKey(until)).order("end_date",{ascending:true})
+          supabase.from("members").select("id,full_name,joined_on,status").eq("owner_id",ownerId).order("created_at",{ascending:false}),
+          supabase.from("payments").select("amount,paid_on,status").eq("owner_id",ownerId).eq("status","paid"),
+          supabase.from("expenses").select("amount,spent_on").eq("owner_id",ownerId),
+          expiryRequest
         ]);
         for (const result of [m,p,e,x]) if(result.error) throw result.error;
         if(!cancelled) {
