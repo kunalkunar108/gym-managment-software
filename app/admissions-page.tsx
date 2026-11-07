@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CheckCircle2, LoaderCircle, RefreshCw, Camera, UserRound } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
@@ -19,6 +19,10 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
   const [gymOwnerId, setGymOwnerId] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const cameraStream = useRef<MediaStream | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -55,14 +59,54 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
     finally { setLoading(false); }
   }
   useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    if (cameraOpen && videoRef.current && cameraStream.current) {
+      videoRef.current.srcObject = cameraStream.current;
+      void videoRef.current.play().catch(() => setCameraError("Could not start the camera preview."));
+    }
+  }, [cameraOpen]);
+  useEffect(() => () => { cameraStream.current?.getTracks().forEach(track => track.stop()); }, []);
+
+  async function startCamera() {
+    setCameraError("");
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) throw new Error("Camera access is unavailable. Open GymDesk in a supported browser over HTTPS.");
+      cameraStream.current?.getTracks().forEach(track => track.stop());
+      cameraStream.current = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+      setCameraOpen(true);
+    } catch (error) {
+      setCameraError(error instanceof Error ? error.message : "Camera permission was denied or the camera is unavailable.");
+    }
+  }
+
+  function closeCamera() {
+    cameraStream.current?.getTracks().forEach(track => track.stop());
+    cameraStream.current = null;
+    setCameraOpen(false);
+  }
+
+  function capturePhoto() {
+    const video = videoRef.current;
+    if (!video || !video.videoWidth || !video.videoHeight) { setCameraError("Wait for the camera preview, then take the photo."); return; }
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    if (!context) { setCameraError("Could not capture the photo. Try again."); return; }
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob(blob => {
+      if (!blob) { setCameraError("Could not create the photo. Try again."); return; }
+      const file = new File([blob], "member-photo.jpg", { type: "image/jpeg" });
+      setPhotoFile(file); setPhotoPreview(URL.createObjectURL(file)); closeCamera();
+    }, "image/jpeg", 0.88);
+  }
 
   function changeKind(next: "new" | "re") {
-    setKind(next); setForm(initial); setPhotoFile(null); setPhotoPreview(null); setSuccess(""); setError("");
+    closeCamera(); setKind(next); setForm(initial); setPhotoFile(null); setPhotoPreview(null); setSuccess(""); setError("");
   }
   async function chooseMember(id: string) {
     const m = members.find(x => x.id === id);
     setForm(old => ({ ...old, memberId: id, fullName: m?.full_name ?? "", phone: m?.phone ?? "", secondaryPhone: m?.secondary_phone ?? "", gender: m?.gender ?? "male", address: m?.address ?? "" }));
-    setPhotoFile(null); setPhotoPreview(null);
+    closeCamera(); setPhotoFile(null); setPhotoPreview(null);
     if (m?.photo_path) { const { data } = await supabase.storage.from("member-photos").createSignedUrl(m.photo_path, 3600); setPhotoPreview(data?.signedUrl ?? null); }
   }
   function choosePlan(id: string) {
@@ -155,7 +199,7 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
             <label className="payment-note-field">Address<input value={form.address} onChange={e=>setForm({...form,address:e.target.value})} placeholder="Member address"/></label>
           </div>
         </section>
-        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">Member photo</h2><p className="panel-subtitle">Take a photo using the device camera. It will be saved to this member’s profile for future identification.</p></div><div className="flex flex-wrap items-center gap-4"><div className="h-24 w-24 overflow-hidden rounded-xl bg-[#f0f4f0] flex items-center justify-center">{photoPreview ? <img src={photoPreview} alt="Member photo preview" className="h-full w-full object-cover"/> : <UserRound size={34} className="text-[#9aa79d]"/>}</div><label className="button-secondary cursor-pointer"><Camera size={16}/> {photoPreview ? "Retake photo" : "Take photo"}<input className="sr-only" type="file" accept="image/jpeg,image/png,image/webp" capture="user" onChange={e=>{const file=e.target.files?.[0]; if(file){setPhotoFile(file);setPhotoPreview(URL.createObjectURL(file));} e.currentTarget.value="";}} /></label>{photoFile && <span className="text-xs text-[#66736a]">New photo ready to save</span>}</div></section>
+        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">Member photo</h2><p className="panel-subtitle">Take a photo using the device camera. It will be saved to this member’s profile for future identification.</p></div><div className="space-y-3"><div className="flex flex-wrap items-center gap-4"><div className="h-24 w-24 overflow-hidden rounded-xl bg-[#f0f4f0] flex items-center justify-center">{photoPreview ? <img src={photoPreview} alt="Member photo preview" className="h-full w-full object-cover"/> : <UserRound size={34} className="text-[#9aa79d]"/>}</div><div className="flex flex-wrap gap-2"><button type="button" className="button-secondary" onClick={()=>void startCamera()} disabled={cameraOpen}><Camera size={16}/> {photoPreview ? "Retake photo" : "Open camera"}</button>{photoFile && <span className="self-center text-xs text-[#66736a]">New photo ready to save</span>}</div></div>{cameraOpen && <div className="max-w-md space-y-3 rounded-xl border border-[#e5ebe5] p-3"><video ref={videoRef} autoPlay playsInline muted className="w-full rounded-lg bg-black aspect-video object-cover"/><div className="flex gap-2"><button type="button" className="button-primary" onClick={capturePhoto}><Camera size={15}/> Take photo</button><button type="button" className="button-secondary" onClick={closeCamera}>Cancel</button></div></div>}{cameraError && <p role="alert" className="text-sm text-[#b33b32]">{cameraError}</p>}</div></section>
         <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">2. Membership details</h2><p className="panel-subtitle">Choose a plan, dates, and applicable discount.</p></div>
           <div className="member-form-grid">
             <label>Membership plan *<select required value={form.planId} onChange={e=>choosePlan(e.target.value)}><option value="">Select plan</option>{plans.map(p=><option key={p.id} value={p.id}>{p.name}{" · " + money(Number(p.price))} / {p.duration_months} months</option>)}</select></label>
