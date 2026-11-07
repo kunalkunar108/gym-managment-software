@@ -79,10 +79,11 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
           p_admission_type: kind, p_member_id: kind === "re" ? form.memberId : null,
           p_full_name: form.fullName.trim(), p_phone: form.phone.trim(), p_gender: form.gender,
           p_address: form.address.trim() || null, p_secondary_phone: form.secondaryPhone.trim() || null,
-          p_plan_id: form.planId, p_start_date: form.startDate, p_end_date: form.endDate
+          p_plan_id: form.planId, p_start_date: form.startDate, p_end_date: form.endDate,
+          p_discount_percent: discount, p_admission_fee: admissionFee, p_suggested_payment_method: form.method
         });
         if (rpcError) throw rpcError;
-        setSuccess("Admission saved. No payment was collected or recorded. Please ask the owner to handle the fees.");
+        setSuccess("Admission saved. The owner must review the suggested payment method and record any payment.");
       } else {
         const { data, error: rpcError } = await supabase.rpc("complete_admission", {
           p_admission_type: kind, p_member_id: kind === "re" ? form.memberId : null,
@@ -116,15 +117,15 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
             <label className="payment-note-field">Address<input value={form.address} onChange={e=>setForm({...form,address:e.target.value})} placeholder="Member address"/></label>
           </div>
         </section>
-        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">2. Membership details</h2><p className="panel-subtitle">{trainerMode ? "Choose the membership plan and dates. The owner will set and record all fees." : "Choose a plan and apply a percentage discount."}</p></div>
+        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">2. Membership details</h2><p className="panel-subtitle">"Choose a plan, dates, and applicable discount."</p></div>
           <div className="member-form-grid">
-            <label>Membership plan *<select required value={form.planId} onChange={e=>choosePlan(e.target.value)}><option value="">Select plan</option>{plans.map(p=><option key={p.id} value={p.id}>{p.name}{trainerMode ? "" : " · " + money(Number(p.price))} / {p.duration_months} months</option>)}</select></label>
+            <label>Membership plan *<select required value={form.planId} onChange={e=>choosePlan(e.target.value)}><option value="">Select plan</option>{plans.map(p=><option key={p.id} value={p.id}>{p.name}{" · " + money(Number(p.price))} / {p.duration_months} months</option>)}</select></label>
             <label>Start date *<input required type="date" value={form.startDate} onChange={e=>chooseStart(e.target.value)}/></label>
             <label>Duration / end date *<input required type="date" min={form.startDate} value={form.endDate} onChange={e=>setForm({...form,endDate:e.target.value})}/></label>
-            {!trainerMode && <label>Discount (%)<input type="number" min="0" max="99.99" step="0.01" value={form.discount} onChange={e=>setForm({...form,discount:e.target.value})} placeholder="0"/></label>}
+            <label>Discount (%)<input type="number" min="0" max="99.99" step="0.01" value={form.discount} onChange={e=>setForm({...form,discount:e.target.value})} placeholder="0"/></label>
           </div>
         </section>
-        {!trainerMode && (<section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">3. Fees and payment</h2><p className="panel-subtitle">Add any one-time admission fee to the discounted membership amount.</p></div>
+        <section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">3. Fees and payment suggestion</h2><p className="panel-subtitle">{trainerMode ? "Enter the proposed fees and payment method for the owner to review. No payment is recorded here." : "Add any one-time admission fee to the discounted membership amount."}</p></div>
                   <div className="member-form-grid">
                     <label>Admission fee (₹)<input type="number" min="0" step="0.01" value={form.admissionFee} onChange={e=>setForm({...form,admissionFee:e.target.value})} placeholder="0.00"/></label>
                     <label>Total amount (₹)<input readOnly value={total.toFixed(2)}/></label>
@@ -132,8 +133,6 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
                   </div>
                   <div className="rounded-xl bg-[#f7f9f7] p-4 text-sm space-y-2"><div className="flex justify-between"><span>Plan price</span><strong>{money(baseAmount)}</strong></div><div className="flex justify-between"><span>Discount ({discount}%)</span><strong>− {money(baseAmount-discountedPlanAmount)}</strong></div><div className="flex justify-between"><span>Discounted membership</span><strong>{money(discountedPlanAmount)}</strong></div><div className="flex justify-between"><span>Admission fee</span><strong>{money(admissionFee)}</strong></div><div className="flex justify-between border-t border-[#e6ebe6] pt-2"><strong>Total payable</strong><strong>{money(total)}</strong></div></div>
                 </section>
-        )}
-        {trainerMode && <p className="rounded-xl bg-[#f7f9f7] p-4 text-sm text-[#637168]">Trainer access does not include plan prices, admission fees, discounts, or payment methods. The owner handles all financial work.</p>}
         {phoneMatches.length>0 && kind==="new" && <p className="rounded-xl bg-[#fff8e8] p-3 text-sm text-[#805b17]">A member with a similar mobile number may already exist: {phoneMatches.slice(0,3).map(m=>m.full_name+" ("+m.phone+")").join(", ")}. Switch to Re-admission if this is the same person.</p>}
         {error && <p role="alert" className="rounded-xl bg-[#fff0ef] p-3 text-sm text-[#b33b32]">{error}</p>}
         {success && <p role="status" className="rounded-xl bg-[#edf8f0] p-3 text-sm text-[#246b3a]">{success}</p>}
