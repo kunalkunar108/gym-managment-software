@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import MembersPage from "./members-page";
+import AdmissionsPage from "./admissions-page";
 import OverviewPage from "./overview-page";
 import MembershipPlansPage from "./membership-plans-page";
 import MembershipsPage from "./memberships-page";
@@ -28,6 +29,7 @@ type NavItem = { label: string; icon: React.ElementType; section?: string };
 
 const navItems: NavItem[] = [
   { label: "Overview", icon: LayoutDashboard, section: "WORKSPACE" },
+  { label: "Admissions", icon: UserRoundPlus },
   { label: "Members", icon: Users },
   { label: "Memberships", icon: CreditCard },
   { label: "Membership Plans", icon: CalendarClock },
@@ -189,11 +191,11 @@ export default function Home() {
         </header>
 
         <div className="page-content">
-          {active === "Members" ? <MembersPage /> : active === "Memberships" ? <MembershipsPage /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "QR check-in" ? <QRCheckinPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
+          {active === "Admissions" ? <AdmissionsPage /> : active === "Members" ? <MembersPage /> : active === "Memberships" ? <MembershipsPage /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "QR check-in" ? <QRCheckinPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
         </div>
       </main>
 
-      {showQuickAdd && <div className="modal-backdrop" onClick={() => setShowQuickAdd(false)}><div className="quick-modal" onClick={(e) => e.stopPropagation()}><div className="flex items-start justify-between"><div><p className="eyebrow">QUICK ACTION</p><h2 className="text-xl font-semibold mt-1">What would you like to add?</h2></div><button className="icon-button" onClick={() => setShowQuickAdd(false)} aria-label="Close"><X size={18} /></button></div><div className="quick-options"><button onClick={() => { setQuickType("member"); setActive("Members"); setShowQuickAdd(false); }}><UserRoundPlus size={20} /><span><strong>New member</strong><small>Register a gym member</small></span><ChevronRight size={16} /></button><button onClick={() => { setQuickType("payment"); setActive("Payments"); setShowQuickAdd(false); }}><Wallet size={20} /><span><strong>Record payment</strong><small>Log a fee collection</small></span><ChevronRight size={16} /></button><button onClick={() => { setQuickType("attendance"); setActive("QR check-in"); setShowQuickAdd(false); }}><QrCode size={20} /><span><strong>QR check-in</strong><small>Open the attendance scanner</small></span><ChevronRight size={16} /></button></div></div></div>}
+      {showQuickAdd && <div className="modal-backdrop" onClick={() => setShowQuickAdd(false)}><div className="quick-modal" onClick={(e) => e.stopPropagation()}><div className="flex items-start justify-between"><div><p className="eyebrow">QUICK ACTION</p><h2 className="text-xl font-semibold mt-1">What would you like to add?</h2></div><button className="icon-button" onClick={() => setShowQuickAdd(false)} aria-label="Close"><X size={18} /></button></div><div className="quick-options"><button onClick={() => { setQuickType("member"); setActive("Admissions"); setShowQuickAdd(false); }}><UserRoundPlus size={20} /><span><strong>New admission</strong><small>Register or re-admit a member</small></span><ChevronRight size={16} /></button><button onClick={() => { setQuickType("payment"); setActive("Payments"); setShowQuickAdd(false); }}><Wallet size={20} /><span><strong>Record payment</strong><small>Log a fee collection</small></span><ChevronRight size={16} /></button><button onClick={() => { setQuickType("attendance"); setActive("QR check-in"); setShowQuickAdd(false); }}><QrCode size={20} /><span><strong>QR check-in</strong><small>Open the attendance scanner</small></span><ChevronRight size={16} /></button></div></div></div>}
     </div>
   );
 }
