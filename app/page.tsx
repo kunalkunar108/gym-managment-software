@@ -147,7 +147,6 @@ export default function Home() {
                 <item.icon size={18} strokeWidth={1.85} />
                 <span>{item.label}</span>
                 {item.label === "QR check-in" && <span className="nav-new">NEW</span>}
-                {item.label === "Attendance" && }
               </button>
             </div>
           ))}
@@ -188,7 +187,7 @@ export default function Home() {
         </header>
 
         <div className="page-content">
-          {active === "Members" ? <MembersPage /> : active === "Memberships" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "QR check-in" ? <QRCheckinPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />
+          {active === "Members" ? <MembersPage /> : active === "Memberships" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "QR check-in" ? <QRCheckinPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
         </div>
       </main>
 
