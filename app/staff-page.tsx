@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Plus, Search, Users, UserCheck, UserX, ShieldCheck, Pencil, Trash2, Eye, X, Phone, Mail, CalendarDays, LoaderCircle, RefreshCw } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
-type StaffRole = "Manager" | "Trainer" | "Receptionist";
+type StaffRole = "Trainer";
 type StaffStatus = "Active" | "Inactive";
-type StaffMember = { id: string; name: string; phone: string; email: string; role: StaffRole; joined: string; status: StaffStatus; salary: string };
-const roles: StaffRole[] = ["Manager", "Trainer", "Receptionist"];
+type StaffMember = { id: string; name: string; phone: string; email: string; role: StaffRole; joined: string; status: StaffStatus; salary: string; userId: string | null };
+const roles: StaffRole[] = ["Trainer"];
 const prettyDate = (value: string) => new Date(value + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 const money = (value: string | number) => value === "" || value === null ? "Not specified" : "₹" + new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 }).format(Number(value));
 const blank = { name: "", phone: "", email: "", role: "Trainer" as StaffRole, joined: new Date().toLocaleDateString("en-CA"), status: "Active" as StaffStatus, salary: "" };
@@ -23,7 +23,7 @@ export default function StaffPage() {
   const [form, setForm] = useState(blank);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [working, setWorking] = useState<string | null>(null);
+  const [working, setWorking] = useState<string | null>(null);\n  const [accountWorking, setAccountWorking] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   async function loadStaff() {
@@ -35,7 +35,7 @@ export default function StaffPage() {
       if (!auth.user) throw new Error("Your session has expired. Please log in again.");
       setUserId(auth.user.id);
       const { data, error: queryError } = await supabase.from("staff")
-        .select("id,full_name,phone,email,role,joined_on,status,salary")
+        .select("id,full_name,phone,email,role,joined_on,status,salary,user_id")
         .eq("owner_id", auth.user.id).order("created_at", { ascending: false });
       if (queryError) throw queryError;
       setItems((data ?? []).map(row => ({
@@ -72,7 +72,7 @@ export default function StaffPage() {
     setError("");
     const record = {
       owner_id: userId, full_name: form.name.trim(), phone: form.phone.trim(),
-      email: form.email.trim() || null, role: form.role.toLowerCase(),
+      email: form.email.trim() || null, role: "trainer",
       joined_on: form.joined, status: form.status.toLowerCase(), salary
     };
     const result = modal === "edit" && selected
@@ -91,6 +91,16 @@ export default function StaffPage() {
     if (updateError) setError(updateError.message);
     else await loadStaff();
     setWorking(null);
+  }
+
+  async function manageLogin(s: StaffMember, action: "invite" | "remove") {
+    setAccountWorking(s.id); setError("");
+    const { data, error: invokeError } = await supabase.functions.invoke("manage-trainer-account", {
+      body: { staff_id: s.id, action }
+    });
+    if (invokeError || data?.error) setError(data?.error || invokeError?.message || "Could not manage trainer login.");
+    else await loadStaff();
+    setAccountWorking(null);
   }
 
   async function remove(s: StaffMember) {
@@ -115,7 +125,7 @@ export default function StaffPage() {
       <div className="staff-toolbar"><div className="table-search"><Search size={15}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search name, phone or email..."/></div><select className="staff-filter" value={roleFilter} onChange={e => setRoleFilter(e.target.value)}><option>All roles</option>{roles.map(role => <option key={role}>{role}</option>)}</select><select className="staff-filter" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}><option>All status</option><option>Active</option><option>Inactive</option></select></div>
       {error && <p role="alert" className="mx-1 mb-3 rounded-xl bg-[#fff0ef] px-4 py-3 text-sm text-[#b33b32]">{error}</p>}
       <div className="table-scroll"><table className="members-table staff-table"><thead><tr><th>STAFF MEMBER</th><th>ROLE</th><th>CONTACT</th><th>JOINED</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>
-      {loading ? <tr><td colSpan={6} className="empty-row"><LoaderCircle size={16} className="inline animate-spin mr-2"/>Loading staff…</td></tr> : filtered.map(s => <tr key={s.id}><td><div className="member-cell"><div className="member-avatar mint">{s.name.split(" ").map(x => x[0]).slice(0,2).join("").toUpperCase()}</div><span>{s.name}</span></div></td><td><span className="staff-role-pill">{s.role}</span></td><td><div className="staff-contact"><span>{s.phone}</span><small>{s.email || "No email added"}</small></div></td><td>{prettyDate(s.joined)}</td><td><span className={`status-badge ${s.status === "Active" ? "status-active" : "status-pending"}`}>{s.status}</span></td><td><div className="staff-actions"><button title="View details" onClick={() => { setSelected(s); setModal("view"); }}><Eye size={14}/></button><button title="Edit staff" onClick={() => openEdit(s)}><Pencil size={14}/></button><button title={s.status === "Active" ? "Deactivate" : "Activate"} disabled={working === s.id} onClick={() => void toggle(s)}>{working === s.id ? <LoaderCircle size={14} className="animate-spin"/> : s.status === "Active" ? <UserX size={14}/> : <UserCheck size={14}/>}</button><button title="Delete staff" className="danger" disabled={working === s.id} onClick={() => void remove(s)}><Trash2 size={14}/></button></div></td></tr>)}
+      {loading ? <tr><td colSpan={6} className="empty-row"><LoaderCircle size={16} className="inline animate-spin mr-2"/>Loading staff…</td></tr> : filtered.map(s => <tr key={s.id}><td><div className="member-cell"><div className="member-avatar mint">{s.name.split(" ").map(x => x[0]).slice(0,2).join("").toUpperCase()}</div><span>{s.name}</span></div></td><td><span className="staff-role-pill">{s.role}</span></td><td><div className="staff-contact"><span>{s.phone}</span><small>{s.email || "No email added"}{s.userId ? " · Login linked" : ""}</small></div></td><td>{prettyDate(s.joined)}</td><td><span className={`status-badge ${s.status === "Active" ? "status-active" : "status-pending"}`}>{s.status}</span></td><td><div className="staff-actions">{s.userId ? <button title="Remove trainer login" disabled={accountWorking === s.id} onClick={() => void manageLogin(s, "remove")}><UserX size={14}/></button> : <button title="Send trainer login invitation" disabled={accountWorking === s.id || s.status !== "Active" || !s.email} onClick={() => void manageLogin(s, "invite")}><Mail size={14}/></button>}<button title="View details" onClick={() => { setSelected(s); setModal("view"); }}><Eye size={14}/></button><button title="Edit staff" onClick={() => openEdit(s)}><Pencil size={14}/></button><button title={s.status === "Active" ? "Deactivate" : "Activate"} disabled={working === s.id} onClick={() => void toggle(s)}>{working === s.id ? <LoaderCircle size={14} className="animate-spin"/> : s.status === "Active" ? <UserX size={14}/> : <UserCheck size={14}/>}</button><button title="Delete staff" className="danger" disabled={working === s.id} onClick={() => void remove(s)}><Trash2 size={14}/></button></div></td></tr>)}
       {!loading && filtered.length === 0 && <tr><td colSpan={6} className="empty-row">{items.length === 0 ? "No staff members added yet." : "No staff members match these filters."}</td></tr>}
       </tbody></table></div>
       <div className="flex items-center justify-between px-1 py-3"><p className="staff-footnote">Staff records are saved securely to your GymDesk database.</p><button className="text-link flex items-center gap-1" onClick={() => void loadStaff()}><RefreshCw size={13}/> Refresh</button></div>
@@ -131,7 +141,7 @@ export default function StaffPage() {
       <label>Full name *<input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Enter staff name" required/></label>
       <label>Phone number *<input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+91..." required/></label>
       <label>Email address<input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="name@example.com"/></label>
-      <label>Role<select value={form.role} onChange={e => setForm({ ...form, role: e.target.value as StaffRole })}><option>Manager</option><option>Trainer</option><option>Receptionist</option></select></label>
+      <label>Account type<input value="Trainer" disabled/></label>
       <label>Joining date<input type="date" value={form.joined} onChange={e => setForm({ ...form, joined: e.target.value })}/></label>
       <label>Monthly salary (₹)<input type="number" min="0" step="0.01" value={form.salary.replace(/[^0-9.]/g, "")} onChange={e => setForm({ ...form, salary: e.target.value })} placeholder="Optional"/></label>
       <label>Status<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as StaffStatus })}><option>Active</option><option>Inactive</option></select></label>
