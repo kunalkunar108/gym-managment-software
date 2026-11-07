@@ -141,7 +141,16 @@ export default function Home() {
     return () => { alive = false; };
   }, []);
 
-  useEffect(() => {\n    const handleOpenMember = (event: Event) => {\n      const memberId = (event as CustomEvent<{ memberId?: string }>).detail?.memberId;\n      if (memberId && !trainerOwnerId) setSelectedMemberId(memberId);\n    };\n    window.addEventListener("gymdesk:open-member-profile", handleOpenMember);\n    return () => window.removeEventListener("gymdesk:open-member-profile", handleOpenMember);\n  }, [trainerOwnerId]);\n\n  if (roleLoading) return <div className="min-h-screen flex items-center justify-center bg-[#f7f9f7] text-[#637168]">Loading your GymDesk workspace…</div>;
+  useEffect(() => {
+    const handleOpenMember = (event: Event) => {
+      const memberId = (event as CustomEvent<{ memberId?: string }>).detail?.memberId;
+      if (memberId && !trainerOwnerId) setSelectedMemberId(memberId);
+    };
+    window.addEventListener("gymdesk:open-member-profile", handleOpenMember);
+    return () => window.removeEventListener("gymdesk:open-member-profile", handleOpenMember);
+  }, [trainerOwnerId]);
+
+  if (roleLoading) return <div className="min-h-screen flex items-center justify-center bg-[#f7f9f7] text-[#637168]">Loading your GymDesk workspace…</div>;
   if (accountBlocked) return <div className="min-h-screen flex items-center justify-center bg-[#f7f9f7] p-6"><div className="max-w-md rounded-2xl border border-[#e5ebe5] bg-white p-7 text-center"><h1 className="text-xl font-semibold">Account access unavailable</h1><p className="mt-2 text-sm text-[#7b887f]">This trainer account is inactive or is not linked to a gym. Contact your gym owner.</p><div className="mt-5 flex justify-center"><SignOutButton /></div></div></div>;
   if (trainerOwnerId) return <TrainerDashboard ownerId={trainerOwnerId} />;
 
