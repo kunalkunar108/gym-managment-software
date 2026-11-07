@@ -121,7 +121,7 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
             <label>Membership plan *<select required value={form.planId} onChange={e=>choosePlan(e.target.value)}><option value="">Select plan</option>{plans.map(p=><option key={p.id} value={p.id}>{p.name}{trainerMode ? "" : " · " + money(Number(p.price))} / {p.duration_months} months</option>)}</select></label>
             <label>Start date *<input required type="date" value={form.startDate} onChange={e=>chooseStart(e.target.value)}/></label>
             <label>Duration / end date *<input required type="date" min={form.startDate} value={form.endDate} onChange={e=>setForm({...form,endDate:e.target.value})}/></label>
-            <label>Discount (%)<input type="number" min="0" max="99.99" step="0.01" value={form.discount} onChange={e=>setForm({...form,discount:e.target.value})} placeholder="0"/></label>
+            {!trainerMode && <label>Discount (%)<input type="number" min="0" max="99.99" step="0.01" value={form.discount} onChange={e=>setForm({...form,discount:e.target.value})} placeholder="0"/></label>}
           </div>
         </section>
         {!trainerMode && (<section className="space-y-3 border-t border-[#edf0ed] pt-5"><div><h2 className="panel-title">3. Fees and payment</h2><p className="panel-subtitle">Add any one-time admission fee to the discounted membership amount.</p></div>
