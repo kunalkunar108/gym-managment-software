@@ -117,7 +117,7 @@ export default function MembershipsPage() {
         <label>Status *<select value={form.status} onChange={e=>setForm({...form,status:e.target.value as Membership["status"]})}><option value="active">Active</option><option value="pending">Pending</option><option value="expired">Expired</option><option value="cancelled">Cancelled</option></select></label>
       </div>
       {error && <p role="alert" className="mt-4 text-sm text-[#b33b32]">{error}</p>}
-      <div className="form-modal-actions"><button type="button" className="button-secondary" onClick={()=>setModal(false)} disabled={saving}>Cancel</button><button type="submit" className="button-primary" disabled={saving || members.length===0}>{saving?<LoaderCircle size={15} className="animate-spin"/>:<CheckCircle2 size={15}/ >}{saving?"Saving…":editing?"Save changes":"Assign membership"}</button></div>
+      <div className="form-modal-actions"><button type="button" className="button-secondary" onClick={()=>setModal(false)} disabled={saving}>Cancel</button><button type="submit" className="button-primary" disabled={saving || members.length===0}>{saving?<LoaderCircle size={15} className="animate-spin"/>:<CheckCircle2 size={15}/>}{saving?"Saving…":editing?"Save changes":"Assign membership"}</button></div>
     </form></div>}
   </div>;
 }
