@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { CalendarDays, TrendingUp, TrendingDown, Users, Wallet, ClipboardCheck, CreditCard, Printer, LoaderCircle, RefreshCw } from "lucide-react";
-import { supabase } from "../lib/supabase";\nimport { openMemberProfile } from "../lib/member-navigation";
+import { supabase } from "../lib/supabase";
+import { openMemberProfile } from "../lib/member-navigation";
 
 type Period = "This month" | "Last month" | "All time";
 type PaymentRow = { id:string; receipt_number:string; amount:number|string; paid_on:string; method:string; status:string; member_id:string|null; note:string|null };
