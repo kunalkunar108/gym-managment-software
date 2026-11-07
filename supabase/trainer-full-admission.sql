@@ -9,7 +9,9 @@ alter table public.memberships
   add constraint memberships_suggested_payment_method_check
   check (suggested_payment_method is null or suggested_payment_method in ('cash','upi','card','bank_transfer'));
 
-create or replace function public.trainer_list_membership_plans()
+drop function if exists public.trainer_list_membership_plans();
+
+create function public.trainer_list_membership_plans()
 returns table(id uuid, name text, duration_months integer, price numeric)
 language plpgsql
 stable
