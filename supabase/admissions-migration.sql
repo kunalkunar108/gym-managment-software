@@ -37,6 +37,7 @@ declare
   v_receipt text;
   v_plan_price numeric(12,2);
   v_plan_months integer;
+  v_expected_amount numeric(12,2);
   v_payment_id uuid;
 begin
   if v_owner is null then raise exception 'You must be signed in.'; end if;
@@ -49,12 +50,14 @@ begin
   if p_discount_percent < 0 or p_discount_percent >= 100 then raise exception 'Discount must be between 0 and 99.99 percent.'; end if;
   if p_total_amount < 0 then raise exception 'Total amount cannot be negative.'; end if;
   if p_payment_method not in ('cash','upi','card','bank_transfer') then raise exception 'Select a valid payment method.'; end if;
-  if p_payment_status not in ('paid','pending','failed','refunded') then raise exception 'Select a valid payment status.'; end if;
+  if p_payment_status not in ('paid','pending') then raise exception 'Admission payment status must be paid or pending.'; end if;
 
   select price, duration_months into v_plan_price, v_plan_months
   from public.membership_plans
   where id = p_plan_id and owner_id = v_owner and is_active = true;
   if not found then raise exception 'Selected plan is unavailable. Refresh plans and try again.'; end if;
+  v_expected_amount := round(v_plan_price * (1 - p_discount_percent / 100), 2);
+  if p_total_amount <> v_expected_amount then raise exception 'Total amount does not match the selected plan and discount.'; end if;
 
   if p_admission_type = 'new' then
     if p_member_id is not null then raise exception 'New admission cannot use an existing member.'; end if;
