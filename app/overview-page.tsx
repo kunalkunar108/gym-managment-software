@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, CalendarClock, CalendarDays, CheckCircle2, ChevronDown, ChevronRight, Download, Dumbbell, Plus, Search, Users, Wallet } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { supabase } from "../lib/supabase";\nimport { openMemberProfile } from "../lib/member-navigation";
+import { supabase } from "../lib/supabase";
+import { openMemberProfile } from "../lib/member-navigation";
 
 type Member = { id: string; full_name: string; joined_on: string; status: string };
 type Payment = { amount: number | string; paid_on: string; status: string };
