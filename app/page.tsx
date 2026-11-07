@@ -13,6 +13,7 @@ import ReportsPage from "./reports-page";
 import StaffPage from "./staff-page";
 import SettingsPage from "./settings-page";
 import SignOutButton from "./sign-out-button";
+import MemberProfile from "./member-profile";
 import {
   Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, ChevronDown,
   ChevronLeft, ChevronRight, CircleHelp, CreditCard, Dumbbell,
@@ -99,6 +100,8 @@ function MetricCard({ title, value, change, note, icon: Icon, tone = "green", do
 
 export default function Home() {
   const [trainerOwnerId, setTrainerOwnerId] = useState<string | null>(null);
+  const [gymOwnerId, setGymOwnerId] = useState<string | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [accountBlocked, setAccountBlocked] = useState(false);
   const [roleLoading, setRoleLoading] = useState(true);
   const [active, setActive] = useState("Overview");
@@ -128,6 +131,7 @@ export default function Home() {
         setRoleLoading(false);
         return;
       }
+      setGymOwnerId(ownerId as string);
       const { data: isOwner, error: roleError } = await supabase.rpc("is_gym_owner");
       if (!alive) return;
       if (!roleError && isOwner === false) setTrainerOwnerId(ownerId as string);
@@ -137,7 +141,7 @@ export default function Home() {
     return () => { alive = false; };
   }, []);
 
-  if (roleLoading) return <div className="min-h-screen flex items-center justify-center bg-[#f7f9f7] text-[#637168]">Loading your GymDesk workspace…</div>;
+  useEffect(() => {\n    const handleOpenMember = (event: Event) => {\n      const memberId = (event as CustomEvent<{ memberId?: string }>).detail?.memberId;\n      if (memberId && !trainerOwnerId) setSelectedMemberId(memberId);\n    };\n    window.addEventListener("gymdesk:open-member-profile", handleOpenMember);\n    return () => window.removeEventListener("gymdesk:open-member-profile", handleOpenMember);\n  }, [trainerOwnerId]);\n\n  if (roleLoading) return <div className="min-h-screen flex items-center justify-center bg-[#f7f9f7] text-[#637168]">Loading your GymDesk workspace…</div>;
   if (accountBlocked) return <div className="min-h-screen flex items-center justify-center bg-[#f7f9f7] p-6"><div className="max-w-md rounded-2xl border border-[#e5ebe5] bg-white p-7 text-center"><h1 className="text-xl font-semibold">Account access unavailable</h1><p className="mt-2 text-sm text-[#7b887f]">This trainer account is inactive or is not linked to a gym. Contact your gym owner.</p><div className="mt-5 flex justify-center"><SignOutButton /></div></div></div>;
   if (trainerOwnerId) return <TrainerDashboard ownerId={trainerOwnerId} />;
 
