@@ -17,7 +17,7 @@ type Plan = { id: string; name: string; duration_months: number; price: number; 
 const blank = { full_name: "", phone: "", email: "", joined_on: new Date().toISOString().slice(0, 10) };
 const date = (s: string) => s ? new Date(s + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
-export default function MembersPage() {
+export default function MembersPage({ onAddMember }: { onAddMember: () => void }) {
   const [members, setMembers] = useState<Member[]>([]);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [membershipModal, setMembershipModal] = useState(false);
@@ -157,7 +157,7 @@ export default function MembersPage() {
   const selectedMember = members.find(m => m.id === selected);
 
   return <div className="members-page">
-    <div className="members-heading"><div><p className="eyebrow">GYM WORKSPACE / DIRECTORY</p><h1>Members</h1><p className="welcome-subtitle">Manage member profiles, membership status and contact details.</p></div><button className="button-primary" onClick={openAdd}><Plus size={16}/> Add member</button></div>
+    <div className="members-heading"><div><p className="eyebrow">GYM WORKSPACE / DIRECTORY</p><h1>Members</h1><p className="welcome-subtitle">Manage member profiles, membership status and contact details.</p></div><button className="button-primary" onClick={onAddMember}><Plus size={16}/> Add member</button></div>
     <div className="member-stats"><div className="member-stat"><span>Total members</span><strong>{members.length}</strong><small>Saved member profiles</small></div><div className="member-stat"><span>Active members</span><strong>{active}</strong><small>Currently marked active</small></div><div className="member-stat"><span>Inactive / expired</span><strong>{members.length-active}</strong><small>Require attention</small></div></div>
     <div className="panel directory-panel">
       <div className="directory-toolbar"><div><h2 className="panel-title">All members</h2><p className="panel-subtitle">{filtered.length} records shown</p></div><div className="directory-controls"><label className="table-search"><Search size={15}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search name, phone or email"/></label><label className="filter-select"><SlidersHorizontal size={14}/><select value={filter} onChange={e=>setFilter(e.target.value)}><option>All</option><option>Active</option><option>Inactive</option><option>Expired</option></select><ChevronDown size={13}/></label></div></div>
