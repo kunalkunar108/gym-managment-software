@@ -28,7 +28,14 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
     ]);
     if (rpcError) setExpiryError(rpcError.message);
     setExpiring((data ?? []) as ExpiringMembership[]);
-    if (memberRows) {\n      const withPhotos = await Promise.all(memberRows.map(async (member: Member) => {\n        if (!member.photo_path) return { ...member, photo_url: null };\n        const { data: signed } = await supabase.storage.from("member-photos").createSignedUrl(member.photo_path, 3600);\n        return { ...member, photo_url: signed?.signedUrl ?? null };\n      }));\n      setMembers(withPhotos);\n    }
+    if (memberRows) {
+      const withPhotos = await Promise.all(memberRows.map(async (member: Member) => {
+        if (!member.photo_path) return { ...member, photo_url: null };
+        const { data: signed } = await supabase.storage.from("member-photos").createSignedUrl(member.photo_path, 3600);
+        return { ...member, photo_url: signed?.signedUrl ?? null };
+      }));
+      setMembers(withPhotos);
+    }
     setExpiryLoading(false);
   }
 
@@ -39,7 +46,12 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
     const { data, error: queryError } = await supabase.from("members")
       .select("id,full_name,phone,status,photo_path").eq("owner_id", ownerId).order("full_name");
     if (queryError) setError(queryError.message);
-    setMembers((data ?? []) as Member[]);
+    const withPhotos = await Promise.all((data ?? []).map(async (member: Member) => {
+      if (!member.photo_path) return { ...member, photo_url: null };
+      const { data: signed } = await supabase.storage.from("member-photos").createSignedUrl(member.photo_path, 3600);
+      return { ...member, photo_url: signed?.signedUrl ?? null };
+    }));
+    setMembers(withPhotos);
     setLoading(false);
   }
   const filtered = members.filter(m => (m.full_name + " " + (m.phone || "")).toLowerCase().includes(query.toLowerCase()));
