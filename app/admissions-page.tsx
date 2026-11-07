@@ -23,8 +23,8 @@ export default function AdmissionsPage() {
   const selectedPlan = plans.find(p => p.id === form.planId);
   const baseAmount = Number(selectedPlan?.price ?? 0);
   const discount = Math.min(99.99, Math.max(0, Number(form.discount) || 0));
-  const discountedPlanAmount = Math.max(0, baseAmount * (1 - discount / 100));
-  const admissionFee = Math.max(0, Number(form.admissionFee) || 0);
+  const discountedPlanAmount = Math.max(0, Math.round((baseAmount * (1 - discount / 100) + Number.EPSILON) * 100) / 100);
+  const admissionFee = Math.max(0, Number((Number(form.admissionFee) || 0).toFixed(2)));
   const total = discountedPlanAmount + admissionFee;
   const phoneMatches = useMemo(() => form.phone.trim().length >= 5 ? members.filter(m => m.phone.replace(/\D/g, "").includes(form.phone.replace(/\D/g, ""))) : [], [members, form.phone]);
 
@@ -79,7 +79,7 @@ export default function AdmissionsPage() {
       });
       if (rpcError) throw rpcError;
       const result = data as { receipt_number?: string };
-      setSuccess(`Admission saved successfully. ${result?.receipt_number ? "Receipt: " + result.receipt_number : "No payment receipt was created because the discounted total is zero."}`);
+      setSuccess(`Admission saved successfully. ${result?.receipt_number ? "Receipt: " + result.receipt_number : "No payment receipt was created because the total payable is zero."}`);
       setForm(initial); setKind("new"); await load();
     } catch (e) { setError(e instanceof Error ? e.message : "Could not complete admission."); }
     finally { setSaving(false); }
