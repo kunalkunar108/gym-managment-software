@@ -170,8 +170,9 @@ with check (
   )
 );
 
--- Keep owner-only admission RPC restricted to the owner. Trainers cannot create
--- admissions, memberships or payments through the existing complete_admission function.
+-- The trainer reception workflow below creates member profiles and memberships
+-- without accepting or recording any payment. The owner-only complete_admission
+-- RPC remains unchanged and is the only workflow that creates payment records.
 
 -- Trainers can validate a member's active membership and check them in without
 -- receiving access to membership/payment amounts.
@@ -310,3 +311,118 @@ $$;
 
 revoke all on function public.trainer_manual_check_in(uuid) from public;
 grant execute on function public.trainer_manual_check_in(uuid) to authenticated;
+
+
+-- Reception workflow for trainers: they can create/update member profiles and
+-- create memberships, but they cannot read financial plan prices, membership
+-- amounts, payments, or record collections. All financial values are handled
+-- by this SECURITY DEFINER workflow and remain visible only to owners.
+
+create or replace function public.trainer_list_membership_plans()
+returns table(id uuid, name text, duration_months integer)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  v_owner_id uuid := public.current_gym_owner_id();
+begin
+  if auth.uid() is null or v_owner_id is null or public.is_gym_owner() then
+    raise exception 'An active trainer account is required.';
+  end if;
+  if not exists (
+    select 1 from public.staff s
+    where s.user_id = auth.uid() and s.owner_id = v_owner_id and s.status = 'active'
+  ) then
+    raise exception 'Your trainer account is inactive.';
+  end if;
+  return query
+    select p.id, p.name, p.duration_months
+    from public.membership_plans p
+    where p.owner_id = v_owner_id and p.is_active = true
+    order by p.name;
+end;
+$$;
+
+create or replace function public.trainer_complete_admission(
+  p_admission_type text,
+  p_member_id uuid,
+  p_full_name text,
+  p_phone text,
+  p_gender text,
+  p_address text,
+  p_secondary_phone text,
+  p_plan_id uuid,
+  p_start_date date,
+  p_end_date date
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_owner_id uuid := public.current_gym_owner_id();
+  v_member_id uuid;
+  v_membership_id uuid;
+  v_plan_price numeric(12,2);
+  v_plan_months integer;
+begin
+  if auth.uid() is null or v_owner_id is null or public.is_gym_owner() then
+    raise exception 'An active trainer account is required.';
+  end if;
+  if not exists (
+    select 1 from public.staff s
+    where s.user_id = auth.uid() and s.owner_id = v_owner_id and s.status = 'active'
+  ) then
+    raise exception 'Your trainer account is inactive.';
+  end if;
+  if p_admission_type not in ('new','re') then raise exception 'Invalid admission type.'; end if;
+  if nullif(trim(p_full_name), '') is null or nullif(trim(p_phone), '') is null then
+    raise exception 'Full name and mobile number are required.';
+  end if;
+  if p_gender not in ('male','female','other','prefer_not_to_say') then raise exception 'Select a valid gender.'; end if;
+  if p_start_date is null or p_end_date is null or p_end_date < p_start_date then raise exception 'Invalid membership dates.'; end if;
+
+  select p.price, p.duration_months into v_plan_price, v_plan_months
+  from public.membership_plans p
+  where p.id = p_plan_id and p.owner_id = v_owner_id and p.is_active = true;
+  if not found then raise exception 'Selected plan is unavailable. Refresh plans and try again.'; end if;
+  if p_end_date > (p_start_date + make_interval(months => v_plan_months))::date then
+    raise exception 'End date exceeds the selected plan duration.';
+  end if;
+
+  if p_admission_type = 'new' then
+    if p_member_id is not null then raise exception 'New admission cannot use an existing member.'; end if;
+    insert into public.members(owner_id, full_name, phone, secondary_phone, gender, address, joined_on, status)
+    values (v_owner_id, trim(p_full_name), trim(p_phone), nullif(trim(p_secondary_phone), ''),
+            p_gender, nullif(trim(p_address), ''), p_start_date, 'active')
+    returning id into v_member_id;
+  else
+    if p_member_id is null then raise exception 'Choose an existing member for re-admission.'; end if;
+    update public.members
+    set full_name = trim(p_full_name), phone = trim(p_phone),
+        secondary_phone = nullif(trim(p_secondary_phone), ''), gender = p_gender,
+        address = nullif(trim(p_address), ''), status = 'active'
+    where id = p_member_id and owner_id = v_owner_id
+    returning id into v_member_id;
+    if v_member_id is null then raise exception 'Existing member was not found.'; end if;
+  end if;
+
+  -- The plan's standard amount is stored for owner-side accounting. Trainers
+  -- receive no price, discount, admission-fee, or payment details in response.
+  insert into public.memberships(owner_id, member_id, plan_id, start_date, end_date,
+    amount, original_amount, discount_percent, admission_fee, status)
+  values (v_owner_id, v_member_id, p_plan_id, p_start_date, p_end_date,
+    v_plan_price, v_plan_price, 0, 0, 'active')
+  returning id into v_membership_id;
+
+  return jsonb_build_object('member_id', v_member_id, 'membership_id', v_membership_id);
+end;
+$$;
+
+revoke all on function public.trainer_list_membership_plans() from public;
+revoke all on function public.trainer_complete_admission(text,uuid,text,text,text,text,text,uuid,date,date) from public;
+grant execute on function public.trainer_list_membership_plans() to authenticated;
+grant execute on function public.trainer_complete_admission(text,uuid,text,text,text,text,text,uuid,date,date) to authenticated;
