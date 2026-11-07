@@ -10,7 +10,9 @@ type Member = {
   phone: string;
   email: string | null;
   joined_on: string;
-  status: "active" | "inactive" | "expired";\n  photo_path?: string | null;\n  photo_url?: string | null;
+  status: "active" | "inactive" | "expired";
+  photo_path?: string | null;
+  photo_url?: string | null;
   memberships?: { id: string; plan_id: string | null; start_date: string; end_date: string; amount: number; status: string; suggested_payment_method?: string | null; membership_plans?: { name: string } | null }[];
 };
 type Plan = { id: string; name: string; duration_months: number; price: number; is_active: boolean };
@@ -51,7 +53,12 @@ export default function MembersPage({ onAddMember }: { onAddMember: () => void }
       const { data: planData, error: planError } = await supabase.from("membership_plans").select("id,name,duration_months,price,is_active").eq("owner_id", authData.user.id).order("name");
       if (planError) throw planError;
       setPlans((planData ?? []) as Plan[]);
-      setMembers((data ?? []) as unknown as Member[]);
+      const photoMembers = await Promise.all((data ?? []).map(async (member) => {
+        if (!member.photo_path) return { ...member, photo_url: null };
+        const { data: signed } = await supabase.storage.from("member-photos").createSignedUrl(member.photo_path, 3600);
+        return { ...member, photo_url: signed?.signedUrl ?? null };
+      }));
+      setMembers(photoMembers as unknown as Member[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load members.");
     } finally {
