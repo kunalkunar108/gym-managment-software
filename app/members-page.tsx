@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Search, Plus, SlidersHorizontal, X, Phone, Mail, Pencil, Trash2, Ban, CheckCircle2, ChevronDown, LoaderCircle, RefreshCw } from "lucide-react";
+import { Search, Plus, SlidersHorizontal, X, Phone, Mail, Pencil, Trash2, Ban, CheckCircle2, ChevronDown, LoaderCircle, RefreshCw, CreditCard } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 type Member = {
