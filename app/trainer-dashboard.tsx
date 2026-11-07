@@ -49,11 +49,8 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
 
   async function checkIn(member: Member) {
     setBusyId(member.id); setError("");
-    const { error: insertError } = await supabase.from("attendance").insert({
-      owner_id: ownerId, member_id: member.id, attendance_date: today,
-      check_in: new Date().toISOString(), source: "manual"
-    });
-    if (insertError) setError(insertError.message);
+    const { error: checkInError } = await supabase.rpc("trainer_manual_check_in", { p_member_id: member.id });
+    if (checkInError) setError(checkInError.message);
     else await load();
     setBusyId("");
   }
