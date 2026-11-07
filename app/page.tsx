@@ -132,7 +132,7 @@ export default function Home() {
 
         <div className="gym-switcher">
           <div className="gym-avatar"><Dumbbell size={18} /></div>
-          <div className="min-w-0 flex-1"><p className="gym-name">Iron House Fitness</p><p className="gym-plan">Single gym workspace</p></div>
+          <div className="min-w-0 flex-1"><p className="gym-name">My Gym</p><p className="gym-plan">Single gym workspace</p></div>
           <ChevronDown size={15} className="text-[#89948c]" />
         </div>
 
@@ -147,7 +147,7 @@ export default function Home() {
                 <item.icon size={18} strokeWidth={1.85} />
                 <span>{item.label}</span>
                 {item.label === "QR check-in" && <span className="nav-new">NEW</span>}
-                {item.label === "Attendance" && <span className="nav-count">12</span>}
+                {item.label === "Attendance" && }
               </button>
             </div>
           ))}
@@ -161,8 +161,8 @@ export default function Home() {
             <button onClick={() => setActive("Help center")} className="help-link">Visit help center <ChevronRight size={13} /></button>
           </div>
           <div className="profile-row">
-            <div className="profile-avatar">AK</div>
-            <div className="min-w-0 flex-1"><p className="profile-name">Alex Kumar</p><p className="profile-role">Gym owner</p></div>
+            <div className="profile-avatar">GO</div>
+            <div className="min-w-0 flex-1"><p className="profile-name">Gym owner</p><p className="profile-role">Gym owner</p></div>
             <SignOutButton />
           </div>
         </div>
@@ -180,10 +180,10 @@ export default function Home() {
               <button className="icon-button notification-button" onClick={() => setShowNotifications(!showNotifications)} aria-label="Notifications">
                 <Bell size={18} /><i />
               </button>
-              {showNotifications && <div className="notification-popover"><div className="flex items-center justify-between"><strong className="text-sm">Notifications</strong><span className="text-xs text-[#89948c]">2 new</span></div><div className="notice-item"><span className="notice-dot red-dot" /><div><p>3 memberships expire soon</p><small>Review renewals today</small></div></div><div className="notice-item"><span className="notice-dot green-dot" /><div><p>Daily collection updated</p><small>₹8,400 collected today</small></div></div></div>}
+              {showNotifications && <div className="notification-popover"><strong className="text-sm">Notifications</strong><p className="mt-3 text-xs text-[#89948c]">No new notifications.</p></div>}
             </div>
             <div className="topbar-divider" />
-            <div className="top-profile"><div className="profile-avatar">AK</div><ChevronDown size={14} className="text-[#89948c]" /></div>
+            <div className="top-profile"><div className="profile-avatar">GO</div><ChevronDown size={14} className="text-[#89948c]" /></div>
           </div>
         </header>
 
