@@ -127,48 +127,17 @@ for all to authenticated
 using (public.is_gym_owner() and owner_id = public.current_gym_owner_id())
 with check (public.is_gym_owner() and owner_id = public.current_gym_owner_id());
 
--- Trainers may view and record attendance for any member of their gym.
+-- Attendance/check-in is no longer part of the active product workflow.
 create policy "Gym owners manage attendance" on public.attendance
 for all to authenticated
 using (public.is_gym_owner() and owner_id = public.current_gym_owner_id())
 with check (public.is_gym_owner() and owner_id = public.current_gym_owner_id());
+drop policy if exists "Trainers read attendance" on public.attendance;
+drop policy if exists "Trainers record attendance" on public.attendance;
+drop policy if exists "Trainers update attendance" on public.attendance;
 
-create policy "Trainers read attendance" on public.attendance
-for select to authenticated
-using (
-  not public.is_gym_owner()
-  and owner_id = public.current_gym_owner_id()
-);
-
-create policy "Trainers record attendance" on public.attendance
-for insert to authenticated
-with check (
-  not public.is_gym_owner()
-  and owner_id = public.current_gym_owner_id()
-  and exists (
-    select 1 from public.members m
-    where m.id = member_id and m.owner_id = public.current_gym_owner_id()
-  )
-);
-
-create policy "Trainers update attendance" on public.attendance
-for update to authenticated
-using (
-  not public.is_gym_owner()
-  and owner_id = public.current_gym_owner_id()
-  and exists (
-    select 1 from public.members m
-    where m.id = member_id and m.owner_id = public.current_gym_owner_id()
-  )
-)
-with check (
-  not public.is_gym_owner()
-  and owner_id = public.current_gym_owner_id()
-  and exists (
-    select 1 from public.members m
-    where m.id = member_id and m.owner_id = public.current_gym_owner_id()
-  )
-);
+drop function if exists public.trainer_qr_check_in(uuid);
+drop function if exists public.trainer_manual_check_in(uuid);
 
 -- The trainer reception workflow below creates member profiles and memberships
 -- without accepting or recording any payment. The owner-only complete_admission
