@@ -21,6 +21,7 @@ export default function OverviewPage({ onNavigate }: { onNavigate: (page: string
   const [expenses,setExpenses] = useState<Expense[]>([]);
   const [expiring,setExpiring] = useState<Membership[]>([]);
   const [loading,setLoading] = useState(true);
+  const [isOwner,setIsOwner] = useState(false);
   const [error,setError] = useState("");
 
   useEffect(() => {
@@ -40,16 +41,29 @@ export default function OverviewPage({ onNavigate }: { onNavigate: (page: string
         const expiryRequest = ownerRole
           ? supabase.from("memberships").select("id,member_id,end_date,status").eq("owner_id",ownerId).eq("status","active").gte("end_date",today).lte("end_date",dateKey(until)).order("end_date",{ascending:true})
           : supabase.rpc("trainer_list_expiring_memberships");
-        const [m,p,e,x] = await Promise.all([
+        const [m,x] = await Promise.all([
           supabase.from("members").select("id,full_name,joined_on,status").eq("owner_id",ownerId).order("created_at",{ascending:false}),
-          supabase.from("payments").select("amount,paid_on,status").eq("owner_id",ownerId).eq("status","paid"),
-          supabase.from("expenses").select("amount,spent_on").eq("owner_id",ownerId),
           expiryRequest
         ]);
-        for (const result of [m,p,e,x]) if(result.error) throw result.error;
+        if(m.error) throw m.error;
+        if(x.error) throw x.error;
+        let paymentRows: Payment[] = [];
+        let expenseRows: Expense[] = [];
+        if(ownerRole) {
+          const [p,e] = await Promise.all([
+            supabase.from("payments").select("amount,paid_on,status").eq("owner_id",ownerId).eq("status","paid"),
+            supabase.from("expenses").select("amount,spent_on").eq("owner_id",ownerId)
+          ]);
+          if(p.error) throw p.error;
+          if(e.error) throw e.error;
+          paymentRows = (p.data??[]) as Payment[];
+          expenseRows = (e.data??[]) as Expense[];
+        }
         if(!cancelled) {
-          setMembers((m.data??[]) as Member[]); setPayments((p.data??[]) as Payment[]);
-          setExpenses((e.data??[]) as Expense[]);
+          setIsOwner(Boolean(ownerRole));
+          setMembers((m.data??[]) as Member[]);
+          setPayments(paymentRows);
+          setExpenses(expenseRows);
           setExpiring((x.data??[]) as Membership[]);
         }
       } catch(err) { if(!cancelled) setError(err instanceof Error?err.message:"Could not load dashboard data."); }
@@ -80,15 +94,15 @@ export default function OverviewPage({ onNavigate }: { onNavigate: (page: string
   }
 
   return <div>
-    <section className="welcome-row"><div><p className="eyebrow">{todayText.toUpperCase()}</p><h1>Gym overview <span>✦</span></h1><p className="welcome-subtitle">Your live gym activity and business summary.</p></div><div className="welcome-actions"><button className="button-secondary" onClick={()=>onNavigate("Reports")}><Download size={16}/> Reports</button><button className="button-primary" onClick={()=>onNavigate("Admissions")}><Plus size={17}/> Add member</button></div></section>
+    <section className="welcome-row"><div><p className="eyebrow">{todayText.toUpperCase()}</p><h1>Gym overview <span>✦</span></h1><p className="welcome-subtitle">Your live gym activity and business summary.</p></div><div className="welcome-actions">{isOwner&&<button className="button-secondary" onClick={()=>onNavigate("Reports")}><Download size={16}/> Reports</button>}<button className="button-primary" onClick={()=>onNavigate("Admissions")}><Plus size={17}/> Add member</button></div></section>
     {error&&<div role="alert" className="mb-5 rounded-xl border border-[#f2d2ce] bg-[#fff4f2] px-4 py-3 text-sm text-[#a63d32]">{error}</div>}
     <section className="metric-grid">
       {metric("Total members",loading?"—":String(members.length),"registered members",Users,"green")}
       {metric("Active members",loading?"—":String(activeMembers),"active member profiles",Dumbbell,"blue")}
-      {metric("Collected this month",loading?"—":`₹${money(monthRevenue)}`,"paid payments recorded",Wallet,"purple")}
+      {isOwner&&metric("Collected this month",loading?"—":`₹${money(monthRevenue)}`,"paid payments recorded",Wallet,"purple")}
     </section>
     <section className="content-grid">
-      <div className="panel revenue-panel"><div className="panel-heading"><div><div className="panel-title">Revenue overview</div><p className="panel-subtitle">Income and expenses from saved records</p></div><div className="flex items-center gap-2"><div className="chart-legend"><span className="legend-dot income"/> Income <span className="legend-dot expenses-dot"/> Expenses</div><button className="select-button" onClick={()=>setPeriod(period==="This month"?"Last month":"This month")}>{period}<ChevronDown size={14}/></button></div></div><div className="revenue-total"><strong>₹{money(shownRevenue)}</strong><small>{period} paid collections</small></div><div className="chart-wrap">{loading?<div className="flex h-full items-center justify-center text-sm text-[#89948c]">Loading financial data…</div>:<ResponsiveContainer width="100%" height="100%"><AreaChart data={chart} margin={{top:10,right:5,left:-20,bottom:0}}><defs><linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#45a767" stopOpacity={.17}/><stop offset="95%" stopColor="#45a767" stopOpacity={0}/></linearGradient><linearGradient id="expenseFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#e5aa69" stopOpacity={.13}/><stop offset="95%" stopColor="#e5aa69" stopOpacity={0}/></linearGradient></defs><CartesianGrid stroke="#edf1ed" vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill:"#9aa49d",fontSize:11}} interval={Math.max(0,Math.floor(days/8)-1)} dy={10}/><YAxis axisLine={false} tickLine={false} tick={{fill:"#9aa49d",fontSize:11}} tickFormatter={v=>v===0?"0":`${v/1000}k`}/><Tooltip formatter={v=>[`₹${money(Number(v))}`,""]} contentStyle={{border:"1px solid #e9eee9",borderRadius:12,fontSize:12}}/><Area type="monotone" dataKey="income" stroke="#329653" strokeWidth={2.5} fill="url(#incomeFill)"/><Area type="monotone" dataKey="expenses" stroke="#e5aa69" strokeWidth={2} fill="url(#expenseFill)"/></AreaChart></ResponsiveContainer>}</div></div>
+      {isOwner&&<div className="panel revenue-panel"><div className="panel-heading"><div><div className="panel-title">Revenue overview</div><p className="panel-subtitle">Income and expenses from saved records</p></div><div className="flex items-center gap-2"><div className="chart-legend"><span className="legend-dot income"/> Income <span className="legend-dot expenses-dot"/> Expenses</div><button className="select-button" onClick={()=>setPeriod(period==="This month"?"Last month":"This month")}>{period}<ChevronDown size={14}/></button></div></div><div className="revenue-total"><strong>₹{money(shownRevenue)}</strong><small>{period} paid collections</small></div><div className="chart-wrap">{loading?<div className="flex h-full items-center justify-center text-sm text-[#89948c]">Loading financial data…</div>:<ResponsiveContainer width="100%" height="100%"><AreaChart data={chart} margin={{top:10,right:5,left:-20,bottom:0}}><defs><linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#45a767" stopOpacity={.17}/><stop offset="95%" stopColor="#45a767" stopOpacity={0}/></linearGradient><linearGradient id="expenseFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#e5aa69" stopOpacity={.13}/><stop offset="95%" stopColor="#e5aa69" stopOpacity={0}/></linearGradient></defs><CartesianGrid stroke="#edf1ed" vertical={false}/><XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill:"#9aa49d",fontSize:11}} interval={Math.max(0,Math.floor(days/8)-1)} dy={10}/><YAxis axisLine={false} tickLine={false} tick={{fill:"#9aa49d",fontSize:11}} tickFormatter={v=>v===0?"0":`${v/1000}k`}/><Tooltip formatter={v=>[`₹${money(Number(v))}`,""]} contentStyle={{border:"1px solid #e9eee9",borderRadius:12,fontSize:12}}/><Area type="monotone" dataKey="income" stroke="#329653" strokeWidth={2.5} fill="url(#incomeFill)"/><Area type="monotone" dataKey="expenses" stroke="#e5aa69" strokeWidth={2} fill="url(#expenseFill)"/></AreaChart></ResponsiveContainer>}</div></div>
 
     </section>
     <section className="lower-grid">
