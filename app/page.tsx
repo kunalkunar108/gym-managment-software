@@ -7,19 +7,17 @@ import MembersPage from "./members-page";
 import AdmissionsPage from "./admissions-page";
 import OverviewPage from "./overview-page";
 import MembershipPlansPage from "./membership-plans-page";
-import AttendancePage from "./attendance-page";
 import PaymentsPage from "./payments-page";
 import ExpensesPage from "./expenses-page";
 import ReportsPage from "./reports-page";
 import StaffPage from "./staff-page";
-import QRCheckinPage from "./qr-checkin-page";
 import SettingsPage from "./settings-page";
 import SignOutButton from "./sign-out-button";
 import {
   Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, ChevronDown,
-  ChevronLeft, ChevronRight, CircleHelp, ClipboardCheck, CreditCard, Dumbbell,
+  ChevronLeft, ChevronRight, CircleHelp, CreditCard, Dumbbell,
   LayoutDashboard, LogOut, Menu, MoreHorizontal, Plus, Search, Settings,
-  ShieldCheck, Users, Wallet, X, Zap, Clock3, UserRoundPlus, QrCode,
+  ShieldCheck, Users, Wallet, X, Zap, Clock3, UserRoundPlus,
   TrendingUp, CalendarClock, SlidersHorizontal, Download
 } from "lucide-react";
 import {
@@ -33,8 +31,6 @@ const navItems: NavItem[] = [
   { label: "Admissions", icon: UserRoundPlus },
   { label: "Members", icon: Users },
   { label: "Membership Plans", icon: CalendarClock },
-  { label: "Attendance", icon: ClipboardCheck },
-  { label: "QR check-in", icon: QrCode },
   { label: "Payments", icon: Wallet, section: "FINANCE" },
   { label: "Expenses", icon: Activity },
   { label: "Reports", icon: TrendingUp },
@@ -219,11 +215,11 @@ export default function Home() {
         </header>
 
         <div className="page-content">
-          {active === "Admissions" ? <AdmissionsPage /> : active === "Members" ? <MembersPage onAddMember={() => setActive("Admissions")} /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Attendance" ? <AttendancePage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "QR check-in" ? <QRCheckinPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
+          {active === "Admissions" ? <AdmissionsPage /> : active === "Members" ? <MembersPage onAddMember={() => setActive("Admissions")} /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
         </div>
       </main>
 
-      {showQuickAdd && <div className="modal-backdrop" onClick={() => setShowQuickAdd(false)}><div className="quick-modal" onClick={(e) => e.stopPropagation()}><div className="flex items-start justify-between"><div><p className="eyebrow">QUICK ACTION</p><h2 className="text-xl font-semibold mt-1">What would you like to add?</h2></div><button className="icon-button" onClick={() => setShowQuickAdd(false)} aria-label="Close"><X size={18} /></button></div><div className="quick-options"><button onClick={() => { setQuickType("member"); setActive("Admissions"); setShowQuickAdd(false); }}><UserRoundPlus size={20} /><span><strong>New admission</strong><small>Register or re-admit a member</small></span><ChevronRight size={16} /></button><button onClick={() => { setQuickType("payment"); setActive("Payments"); setShowQuickAdd(false); }}><Wallet size={20} /><span><strong>Record payment</strong><small>Log a fee collection</small></span><ChevronRight size={16} /></button><button onClick={() => { setQuickType("attendance"); setActive("QR check-in"); setShowQuickAdd(false); }}><QrCode size={20} /><span><strong>QR check-in</strong><small>Open the attendance scanner</small></span><ChevronRight size={16} /></button></div></div></div>}
+      {showQuickAdd && <div className="modal-backdrop" onClick={() => setShowQuickAdd(false)}><div className="quick-modal" onClick={(e) => e.stopPropagation()}><div className="flex items-start justify-between"><div><p className="eyebrow">QUICK ACTION</p><h2 className="text-xl font-semibold mt-1">What would you like to add?</h2></div><button className="icon-button" onClick={() => setShowQuickAdd(false)} aria-label="Close"><X size={18} /></button></div><div className="quick-options"><button onClick={() => { setQuickType("member"); setActive("Admissions"); setShowQuickAdd(false); }}><UserRoundPlus size={20} /><span><strong>New admission</strong><small>Register or re-admit a member</small></span><ChevronRight size={16} /></button><button onClick={() => { setQuickType("payment"); setActive("Payments"); setShowQuickAdd(false); }}><Wallet size={20} /><span><strong>Record payment</strong><small>Log a fee collection</small></span><ChevronRight size={16} /></button></div></div></div>}
     </div>
   );
 }
