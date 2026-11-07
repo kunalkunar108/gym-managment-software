@@ -23,7 +23,8 @@ export default function StaffPage() {
   const [form, setForm] = useState(blank);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [working, setWorking] = useState<string | null>(null);\n  const [accountWorking, setAccountWorking] = useState<string | null>(null);
+  const [working, setWorking] = useState<string | null>(null);
+  const [accountWorking, setAccountWorking] = useState<string | null>(null);
   const [error, setError] = useState("");
 
   async function loadStaff() {
