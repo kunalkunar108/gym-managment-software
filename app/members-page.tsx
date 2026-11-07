@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, Plus, SlidersHorizontal, X, Phone, Mail, Pencil, Trash2, Ban, CheckCircle2, ChevronDown, LoaderCircle, RefreshCw, CreditCard } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import MemberProfile from "./member-profile";
 
 type Member = {
   id: string;
@@ -162,6 +163,8 @@ export default function MembersPage({ onAddMember }: { onAddMember: () => void }
     }
   }
   const selectedMember = members.find(m => m.id === selected);
+
+  if (selectedMember) return <MemberProfile memberId={selectedMember.id} ownerId={userId ?? ""} isTrainer={false} onBack={() => setSelected(null)} />;
 
   return <div className="members-page">
     <div className="members-heading"><div><p className="eyebrow">GYM WORKSPACE / DIRECTORY</p><h1>Members</h1><p className="welcome-subtitle">Manage member profiles, membership status and contact details.</p></div><button className="button-primary" onClick={onAddMember}><Plus size={16}/> Add member</button></div>
