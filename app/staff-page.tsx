@@ -21,6 +21,7 @@ export default function StaffPage() {
   const [modal, setModal] = useState<"add" | "edit" | "view" | null>(null);
   const [selected, setSelected] = useState<StaffMember | null>(null);
   const [form, setForm] = useState(blank);
+  const [trainerPassword, setTrainerPassword] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [working, setWorking] = useState<string | null>(null);
@@ -60,13 +61,15 @@ export default function StaffPage() {
   ), [items, query, roleFilter, statusFilter]);
   const active = items.filter(s => s.status === "Active").length;
 
-  const openAdd = () => { setSelected(null); setForm({ ...blank, joined: new Date().toLocaleDateString("en-CA") }); setError(""); setModal("add"); };
-  const openEdit = (s: StaffMember) => { setSelected(s); setForm({ ...s }); setError(""); setModal("edit"); };
+  const openAdd = () => { setSelected(null); setForm({ ...blank, joined: new Date().toLocaleDateString("en-CA") }); setTrainerPassword(""); setError(""); setModal("add"); };
+  const openEdit = (s: StaffMember) => { setSelected(s); setForm({ ...s }); setTrainerPassword(""); setError(""); setModal("edit"); };
 
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!userId) { setError("Your session is unavailable. Please log in again."); return; }
     if (!form.name.trim() || !form.phone.trim()) { setError("Name and phone number are required."); return; }
+    if (modal === "add" && trainerPassword && !form.email.trim()) { setError("Enter an email address to create a trainer login."); return; }
+    if (modal === "add" && trainerPassword && trainerPassword.length < 8) { setError("Trainer password must be at least 8 characters."); return; }
     const salary = form.salary.trim() ? Number(form.salary.replace(/[^0-9.]/g, "")) : null;
     if (salary !== null && (!Number.isFinite(salary) || salary < 0)) { setError("Enter a valid non-negative salary."); return; }
     setSaving(true);
@@ -78,9 +81,15 @@ export default function StaffPage() {
     };
     const result = modal === "edit" && selected
       ? await supabase.from("staff").update(record).eq("id", selected.id).eq("owner_id", userId)
-      : await supabase.from("staff").insert(record);
+      : await supabase.from("staff").insert(record).select("id").single();
     if (result.error) setError(result.error.message);
-    else { setModal(null); await loadStaff(); }
+    else if (modal === "add" && trainerPassword && result.data?.id) {
+      const { data, error: invokeError } = await supabase.functions.invoke("manage-trainer-account", {
+        body: { staff_id: result.data.id, action: "invite", password: trainerPassword }
+      });
+      if (invokeError || data?.error) setError(data?.error || invokeError?.message || "Staff member was added, but trainer login could not be created.");
+      else { setModal(null); setTrainerPassword(""); await loadStaff(); }
+    } else { setModal(null); setTrainerPassword(""); await loadStaff(); }
     setSaving(false);
   }
 
@@ -142,11 +151,12 @@ export default function StaffPage() {
       <label>Full name *<input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} placeholder="Enter staff name" required/></label>
       <label>Phone number *<input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="+91..." required/></label>
       <label>Email address<input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} placeholder="name@example.com"/></label>
+      {modal === "add" && <label>Trainer login password<input type="password" autoComplete="new-password" value={trainerPassword} onChange={e => setTrainerPassword(e.target.value)} placeholder="At least 8 characters (optional)" minLength={8}/><small className="text-xs text-slate-500">Set a password now, or leave blank to send an email invitation later.</small></label>}
       <label>Account type<input value="Trainer" disabled/></label>
       <label>Joining date<input type="date" value={form.joined} onChange={e => setForm({ ...form, joined: e.target.value })}/></label>
       <label>Monthly salary (₹)<input type="number" min="0" step="0.01" value={form.salary.replace(/[^0-9.]/g, "")} onChange={e => setForm({ ...form, salary: e.target.value })} placeholder="Optional"/></label>
       <label>Status<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as StaffStatus })}><option>Active</option><option>Inactive</option></select></label>
-      </div>{error && <p role="alert" className="staff-form-error">{error}</p>}<div className="form-modal-actions"><button type="button" className="button-secondary" onClick={() => setModal(null)} disabled={saving}>Cancel</button><button type="submit" className="button-primary" disabled={saving}>{saving ? <LoaderCircle size={15} className="animate-spin"/> : null}{saving ? "Saving…" : modal === "edit" ? "Save changes" : "Add staff member"}</button></div></form>}
+      </div>{error && <p role="alert" className="staff-form-error">{error}</p>}<div className="form-modal-actions"><button type="button" className="button-secondary" onClick={() => setModal(null)} disabled={saving}>Cancel</button><button type="submit" className="button-primary" disabled={saving}>{saving ? <LoaderCircle size={15} className="animate-spin"/> : null}{saving ? "Saving…" : modal === "edit" ? "Save changes" : trainerPassword ? "Add staff & create login" : "Add staff member"}</button></div></form>}
     </div></div>}
   </div>;
 }
