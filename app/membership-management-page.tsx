@@ -10,7 +10,7 @@ type Filter = "All" | "Active" | "Expiring Soon" | "Expired" | "Pending" | "Canc
 const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 const dateText = (v: string) => new Date(v+"T00:00:00").toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"numeric"});
 
-export default function MembershipManagementPage({ ownerId, isTrainer, onRenew }: { ownerId: string; isTrainer: boolean; onNavigate: (page: string) => void; onRenew: (memberId: string) => void }) {
+export default function MembershipManagementPage({ ownerId, isTrainer, onRenew }: { ownerId: string; isTrainer: boolean; onRenew: (memberId: string) => void }) {
   const [rows,setRows] = useState<Row[]>([]);
   const [filter,setFilter] = useState<Filter>("All");
   const [query,setQuery] = useState("");
