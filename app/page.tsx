@@ -17,7 +17,7 @@ import MemberProfile from "./member-profile";
 import MembershipManagementPage from "./membership-management-page";
 import {
   Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, ChevronDown,
-  ChevronLeft, ChevronRight, CircleHelp, CreditCard, Dumbbell,
+  ChevronLeft, ChevronRight, CreditCard, Dumbbell,
   LayoutDashboard, LogOut, Menu, MoreHorizontal, Plus, Search, Settings,
   ShieldCheck, Users, Wallet, X, Zap, Clock3, UserRoundPlus,
   TrendingUp, CalendarClock, SlidersHorizontal, Download
@@ -189,12 +189,6 @@ export default function Home() {
         </nav>
 
         <div className="sidebar-bottom">
-          <div className="help-card">
-            <div className="help-icon"><CircleHelp size={17} /></div>
-            <p className="text-sm font-semibold text-[#26352b]">Need a hand?</p>
-            <p className="mt-1 text-xs leading-5 text-[#849087]">Get help setting up your gym workspace.</p>
-            <button onClick={() => setActive("Help center")} className="help-link">Visit help center <ChevronRight size={13} /></button>
-          </div>
           <div className="profile-row">
             <div className="profile-avatar">GO</div>
             <div className="min-w-0 flex-1"><p className="profile-name">Gym owner</p><p className="profile-role">Gym owner</p></div>
