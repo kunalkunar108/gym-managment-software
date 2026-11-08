@@ -14,6 +14,7 @@ import StaffPage from "./staff-page";
 import SettingsPage from "./settings-page";
 import SignOutButton from "./sign-out-button";
 import MemberProfile from "./member-profile";
+import MembershipManagementPage from "./membership-management-page";
 import {
   Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, ChevronDown,
   ChevronLeft, ChevronRight, CircleHelp, CreditCard, Dumbbell,
@@ -32,6 +33,7 @@ const navItems: NavItem[] = [
   { label: "Admissions", icon: UserRoundPlus },
   { label: "Members", icon: Users },
   { label: "Membership Plans", icon: CalendarClock },
+  { label: "Membership Management", icon: Clock3 },
   { label: "Payments", icon: Wallet, section: "FINANCE" },
   { label: "Expenses", icon: Activity },
   { label: "Reports", icon: TrendingUp },
@@ -220,7 +222,7 @@ export default function Home() {
         </header>
 
         <div className="page-content">
-          {selectedMemberId && gymOwnerId ? <MemberProfile memberId={selectedMemberId} ownerId={gymOwnerId} isTrainer={false} onBack={() => setSelectedMemberId(null)} /> : active === "Admissions" ? <AdmissionsPage /> : active === "Members" ? <MembersPage onAddMember={() => setActive("Admissions")} /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
+          {selectedMemberId && gymOwnerId ? <MemberProfile memberId={selectedMemberId} ownerId={gymOwnerId} isTrainer={false} onBack={() => setSelectedMemberId(null)} /> : active === "Admissions" ? <AdmissionsPage /> : active === "Members" ? <MembersPage onAddMember={() => setActive("Admissions")} /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Membership Management" && gymOwnerId ? <MembershipManagementPage ownerId={gymOwnerId} isTrainer={false} onNavigate={setActive} /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
         </div>
       </main>
 
