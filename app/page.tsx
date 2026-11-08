@@ -104,6 +104,7 @@ export default function Home() {
   const [trainerOwnerId, setTrainerOwnerId] = useState<string | null>(null);
   const [gymOwnerId, setGymOwnerId] = useState<string | null>(null);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [renewalMemberId, setRenewalMemberId] = useState<string | null>(null);
   const [accountBlocked, setAccountBlocked] = useState(false);
   const [roleLoading, setRoleLoading] = useState(true);
   const [active, setActive] = useState("Overview");
@@ -222,7 +223,7 @@ export default function Home() {
         </header>
 
         <div className="page-content">
-          {selectedMemberId && gymOwnerId ? <MemberProfile memberId={selectedMemberId} ownerId={gymOwnerId} isTrainer={false} onBack={() => setSelectedMemberId(null)} /> : active === "Admissions" ? <AdmissionsPage /> : active === "Members" ? <MembersPage onAddMember={() => setActive("Admissions")} /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Membership Management" && gymOwnerId ? <MembershipManagementPage ownerId={gymOwnerId} isTrainer={false} onNavigate={setActive} /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
+          {selectedMemberId && gymOwnerId ? <MemberProfile memberId={selectedMemberId} ownerId={gymOwnerId} isTrainer={false} onBack={() => setSelectedMemberId(null)} /> : active === "Admissions" ? <AdmissionsPage initialMemberId={renewalMemberId} /> : active === "Members" ? <MembersPage onAddMember={() => setActive("Admissions")} /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Membership Management" && gymOwnerId ? <MembershipManagementPage ownerId={gymOwnerId} isTrainer={false} onRenew={(memberId) => { setRenewalMemberId(memberId); setActive("Admissions"); }} /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
         </div>
       </main>
 
