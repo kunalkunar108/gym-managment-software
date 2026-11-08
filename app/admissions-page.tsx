@@ -12,7 +12,7 @@ const addMonths = (date: string, months: number) => { const d = new Date(date + 
 const money = (n: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(n);
 const initial = { memberId: "", fullName: "", phone: "", secondaryPhone: "", gender: "male", address: "", planId: "", startDate: today(), endDate: "", discount: "0", admissionFee: "0", method: "cash" };
 
-export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: boolean }) {
+export default function AdmissionsPage({ trainerMode = false, initialMemberId = null }: { trainerMode?: boolean; initialMemberId?: string | null }) {
   const [kind, setKind] = useState<"new" | "re">("new");
   const [form, setForm] = useState(initial);
   const [members, setMembers] = useState<Member[]>([]);
@@ -110,6 +110,13 @@ export default function AdmissionsPage({ trainerMode = false }: { trainerMode?: 
     closeCamera(); setPhotoFile(null); setPhotoPreview(null);
     if (m?.photo_path) { const { data } = await supabase.storage.from("member-photos").createSignedUrl(m.photo_path, 3600); setPhotoPreview(data?.signedUrl ?? null); }
   }
+  useEffect(() => {
+    if (initialMemberId && members.some(member => member.id === initialMemberId)) {
+      setKind("re");
+      void chooseMember(initialMemberId);
+    }
+  }, [initialMemberId, members]);
+
   function choosePlan(id: string) {
     const p = plans.find(x => x.id === id);
     setForm(old => ({ ...old, planId: id, endDate: p ? addMonths(old.startDate, p.duration_months) : "" }));
