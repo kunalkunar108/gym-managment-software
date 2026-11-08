@@ -19,6 +19,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   const [expiring, setExpiring] = useState<ExpiringMembership[]>([]);
   const [query, setQuery] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [renewalMemberId, setRenewalMemberId] = useState<string | null>(null);
   const [view, setView] = useState<"overview" | "admissions" | "members" | "membership-management">("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -96,7 +97,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
 
       {error && <div role="alert" className="mb-5 rounded-xl border border-[#f2d2ce] bg-[#fff4f2] px-4 py-3 text-sm text-[#a63d32]">{error}</div>}
 
-      {view === "membership-management" ? <MembershipManagementPage ownerId={ownerId} isTrainer={true} onNavigate={(page) => setView(page === "Admissions" ? "admissions" : "membership-management")} /> : view === "admissions" ? <AdmissionsPage trainerMode /> : view === "overview" ? <>
+      {view === "membership-management" ? <MembershipManagementPage ownerId={ownerId} isTrainer={true} onRenew={(memberId) => { setRenewalMemberId(memberId); setView("admissions"); }} /> : view === "admissions" ? <AdmissionsPage trainerMode initialMemberId={renewalMemberId} /> : view === "overview" ? <>
         <section className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7b887f]">Total members</span><span className="rounded-xl bg-[#edf5ff] p-2.5 text-[#4c83bd]"><Users size={19}/></span></div><p className="mt-4 text-3xl font-semibold">{loading ? "—" : members.length}</p><p className="mt-1 text-xs text-[#8a968e]">Registered member profiles</p></div>
           <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7b887f]">Active members</span><span className="rounded-xl bg-[#e8f5eb] p-2.5 text-[#278348]"><Dumbbell size={19}/></span></div><p className="mt-4 text-3xl font-semibold">{loading ? "—" : activeMembers}</p><p className="mt-1 text-xs text-[#8a968e]">Currently marked active</p></div>
