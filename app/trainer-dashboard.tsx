@@ -7,6 +7,7 @@ import SignOutButton from "./sign-out-button";
 import AdmissionsPage from "./admissions-page";
 import MemberProfile from "./member-profile";
 import { openMemberProfile } from "../lib/member-navigation";
+import MembershipManagementPage from "./membership-management-page";
 
 type Member = { id: string; full_name: string; phone: string | null; status: string; joined_on: string; photo_path: string | null; photo_url?: string | null };
 type ExpiringMembership = { id: string; member_id: string; end_date: string; status: string };
@@ -18,7 +19,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   const [expiring, setExpiring] = useState<ExpiringMembership[]>([]);
   const [query, setQuery] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-  const [view, setView] = useState<"overview" | "admissions" | "members">("overview");
+  const [view, setView] = useState<"overview" | "admissions" | "members" | "membership-management">("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -65,7 +66,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   const recentMembers = members.slice(0, 5);
   const filteredMembers = members.filter(member => (member.full_name + " " + (member.phone || "")).toLowerCase().includes(query.toLowerCase()));
 
-  const navButton = (key: "overview" | "admissions" | "members", label: string, Icon: typeof Users) => (
+  const navButton = (key: "overview" | "admissions" | "members" | "membership-management", label: string, Icon: typeof Users) => (
     <button onClick={() => setView(key)} className={"flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition " + (view === key ? "bg-[#e8f5eb] text-[#278348]" : "text-[#718077] hover:bg-[#f3f6f3]")}>
       <Icon size={17} />{label}
     </button>
@@ -82,7 +83,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
       </header>
 
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div><p className="text-xs font-semibold tracking-[.14em] text-[#8a968e]">{new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date()).toUpperCase()}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{view === "overview" ? "Trainer overview" : view === "admissions" ? "Admissions & renewals" : selectedMemberId ? "Member profile" : "Member directory"}</h1><p className="mt-2 text-sm text-[#7b887f]">Manage member activity, admissions and follow-ups.</p></div>
+        <div><p className="text-xs font-semibold tracking-[.14em] text-[#8a968e]">{new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date()).toUpperCase()}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{view === "overview" ? "Trainer overview" : view === "admissions" ? "Admissions & renewals" : view === "membership-management" ? "Membership Management" : selectedMemberId ? "Member profile" : "Member directory"}</h1><p className="mt-2 text-sm text-[#7b887f]">Manage member activity, admissions and follow-ups.</p></div>
         <button onClick={() => void loadDashboard()} className="inline-flex items-center gap-2 rounded-xl border border-[#e3eae3] bg-white px-4 py-2.5 text-sm font-medium text-[#536158] hover:bg-[#f9fbf9]"><RefreshCw size={15}/> Refresh data</button>
       </div>
 
@@ -90,11 +91,12 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
         {navButton("overview", "Overview", LayoutDashboard)}
         {navButton("admissions", "Admissions & renewals", UserRoundPlus)}
         {navButton("members", "Members", Users)}
+        {navButton("membership-management", "Membership Management", CalendarClock)}
       </div>
 
       {error && <div role="alert" className="mb-5 rounded-xl border border-[#f2d2ce] bg-[#fff4f2] px-4 py-3 text-sm text-[#a63d32]">{error}</div>}
 
-      {view === "admissions" ? <AdmissionsPage trainerMode /> : view === "overview" ? <>
+      {view === "membership-management" ? <MembershipManagementPage ownerId={ownerId} isTrainer={true} onNavigate={(page) => setView(page === "Admissions" ? "admissions" : "membership-management")} /> : view === "admissions" ? <AdmissionsPage trainerMode /> : view === "overview" ? <>
         <section className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7b887f]">Total members</span><span className="rounded-xl bg-[#edf5ff] p-2.5 text-[#4c83bd]"><Users size={19}/></span></div><p className="mt-4 text-3xl font-semibold">{loading ? "—" : members.length}</p><p className="mt-1 text-xs text-[#8a968e]">Registered member profiles</p></div>
           <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7b887f]">Active members</span><span className="rounded-xl bg-[#e8f5eb] p-2.5 text-[#278348]"><Dumbbell size={19}/></span></div><p className="mt-4 text-3xl font-semibold">{loading ? "—" : activeMembers}</p><p className="mt-1 text-xs text-[#8a968e]">Currently marked active</p></div>
