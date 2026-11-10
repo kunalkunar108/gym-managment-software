@@ -16,7 +16,6 @@ import SignOutButton from "./sign-out-button";
 import MemberProfile from "./member-profile";
 import MembershipManagementPage from "./membership-management-page";
 import AttendancePage from "./attendance-page";
-import AttendancePage from "./attendance-page";
 import {
   Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, CalendarCheck, ChevronDown,
   ChevronLeft, ChevronRight, CreditCard, Dumbbell,
