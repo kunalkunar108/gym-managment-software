@@ -21,6 +21,8 @@ export default function AttendancePage({ ownerId, isTrainer }: { ownerId: string
   const [method, setMethod] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [checkInUrl, setCheckInUrl] = useState("");
+  useEffect(() => { if (!isTrainer && typeof window !== "undefined") setCheckInUrl(`${window.location.origin}/check-in/${ownerId}`); }, [ownerId, isTrainer]);
 
   const loadAttendance = useCallback(async () => {
     setLoading(true); setError("");
@@ -55,6 +57,7 @@ export default function AttendancePage({ ownerId, isTrainer }: { ownerId: string
       <div><p className="text-xs font-bold tracking-[.15em] text-[#8a968e]">GYMDESK WORKSPACE</p><h1 className="mt-2 text-3xl font-semibold tracking-tight text-[#17211c]">Attendance</h1><p className="mt-2 text-sm text-[#7b887f]">Daily member check-ins and verification methods.</p></div>
       <button onClick={() => void loadAttendance()} disabled={loading} className="inline-flex items-center gap-2 rounded-xl border border-[#e3eae3] bg-white px-4 py-2.5 text-sm font-medium text-[#536158] hover:bg-[#f9fbf9] disabled:opacity-50"><RefreshCw size={15} className={loading ? "animate-spin" : ""}/> Refresh</button>
     </div>
+    {!isTrainer && checkInUrl && <section className="flex flex-col gap-4 rounded-2xl border border-[#dce9dd] bg-white p-5 sm:flex-row sm:items-center"><div className="flex-1"><p className="text-sm font-semibold text-[#26352b]">Permanent member check-in QR</p><p className="mt-1 text-sm text-[#718077]">Display this QR at reception. Members scan it with their own phones to open the check-in page.</p><p className="mt-2 break-all text-xs text-[#278348]">{checkInUrl}</p><p className="mt-2 text-xs text-[#a66a24]">Important: this static QR can be shared remotely. It does not prove the member is physically inside the gym.</p><a href={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(checkInUrl)}`} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-lg border border-[#dce9dd] px-3 py-2 text-xs font-semibold text-[#278348] hover:bg-[#f3faf4]">Open / print QR image</a></div><img src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=${encodeURIComponent(checkInUrl)}`} alt="Permanent gym member check-in QR code" className="h-44 w-44 self-center rounded-lg border border-[#edf1ed] bg-white p-2"/></section>}
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between text-sm text-[#7b887f]">Total check-ins <Users size={18} className="text-[#278348]"/></div><p className="mt-3 text-3xl font-semibold">{loading ? "—" : rows.length}</p><p className="mt-1 text-xs text-[#8a968e]">Selected date</p></div>
       <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between text-sm text-[#7b887f]">Face verification <Camera size={18} className="text-[#278348]"/></div><p className="mt-3 text-3xl font-semibold">{loading ? "—" : faceCount}</p><p className="mt-1 text-xs text-[#8a968e]">Face-based check-ins</p></div>
