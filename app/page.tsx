@@ -15,8 +15,9 @@ import SettingsPage from "./settings-page";
 import SignOutButton from "./sign-out-button";
 import MemberProfile from "./member-profile";
 import MembershipManagementPage from "./membership-management-page";
+import AttendancePage from "./attendance-page";
 import {
-  Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, ChevronDown,
+  Activity, ArrowDownRight, ArrowUpRight, Bell, CalendarDays, CalendarCheck, ChevronDown,
   ChevronLeft, ChevronRight, CreditCard, Dumbbell,
   LayoutDashboard, LogOut, Menu, MoreHorizontal, Plus, Search, Settings,
   ShieldCheck, Users, Wallet, X, Zap, Clock3, UserRoundPlus,
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { label: "Members", icon: Users },
   { label: "Membership Plans", icon: CalendarClock },
   { label: "Membership Management", icon: Clock3 },
+  { label: "Attendance", icon: CalendarCheck },
   { label: "Payments", icon: Wallet, section: "FINANCE" },
   { label: "Expenses", icon: Activity },
   { label: "Reports", icon: TrendingUp },
@@ -217,7 +219,7 @@ export default function Home() {
         </header>
 
         <div className="page-content">
-          {selectedMemberId && gymOwnerId ? <MemberProfile memberId={selectedMemberId} ownerId={gymOwnerId} isTrainer={false} onBack={() => setSelectedMemberId(null)} /> : active === "Admissions" ? <AdmissionsPage initialMemberId={renewalMemberId} /> : active === "Members" ? <MembersPage onAddMember={() => setActive("Admissions")} /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Membership Management" && gymOwnerId ? <MembershipManagementPage ownerId={gymOwnerId} isTrainer={false} onRenew={(memberId) => { setRenewalMemberId(memberId); setActive("Admissions"); }} /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
+          {selectedMemberId && gymOwnerId ? <MemberProfile memberId={selectedMemberId} ownerId={gymOwnerId} isTrainer={false} onBack={() => setSelectedMemberId(null)} /> : active === "Admissions" ? <AdmissionsPage initialMemberId={renewalMemberId} /> : active === "Members" ? <MembersPage onAddMember={() => setActive("Admissions")} /> : active === "Membership Plans" ? <MembershipPlansPage /> : active === "Attendance" && gymOwnerId ? <AttendancePage ownerId={gymOwnerId} isTrainer={false} /> : active === "Membership Management" && gymOwnerId ? <MembershipManagementPage ownerId={gymOwnerId} isTrainer={false} onRenew={(memberId) => { setRenewalMemberId(memberId); setActive("Admissions"); }} /> : active === "Payments" ? <PaymentsPage /> : active === "Expenses" ? <ExpensesPage /> : active === "Reports" ? <ReportsPage /> : active === "Staff" ? <StaffPage /> : active === "Settings" ? <SettingsPage /> : <OverviewPage onNavigate={setActive} />}
         </div>
       </main>
 
