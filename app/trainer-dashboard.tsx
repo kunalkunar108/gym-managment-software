@@ -68,7 +68,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   const recentMembers = members.slice(0, 5);
   const filteredMembers = members.filter(member => (member.full_name + " " + (member.phone || "")).toLowerCase().includes(query.toLowerCase()));
 
-  const navButton = (key: "overview" | "admissions" | "members" | "membership-management", label: string, Icon: typeof Users) => (
+  const navButton = (key: "overview" | "admissions" | "members" | "membership-management" | "attendance", label: string, Icon: typeof Users) => (
     <button onClick={() => setView(key)} className={"flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition " + (view === key ? "bg-[#e8f5eb] text-[#278348]" : "text-[#718077] hover:bg-[#f3f6f3]")}>
       <Icon size={17} />{label}
     </button>
@@ -94,7 +94,6 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
         {navButton("admissions", "Admissions & renewals", UserRoundPlus)}
         {navButton("members", "Members", Users)}
         {navButton("membership-management", "Membership Management", CalendarClock)}
-        {navButton("attendance", "Attendance", CalendarCheck)}
         {navButton("attendance", "Attendance", CalendarCheck)}
       </div>
 
