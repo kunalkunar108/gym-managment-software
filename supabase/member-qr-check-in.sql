@@ -16,11 +16,12 @@ begin
   from public.gym_settings gs where gs.owner_id = p_owner_id limit 1;
   if not found then return 'not_eligible'; end if;
   v_today := (now() at time zone v_timezone)::date;
-  select count(distinct m.id), min(m.id) into v_match_count, v_member_id
+  select count(distinct m.id), (array_agg(distinct m.id order by m.id))[1] into v_match_count, v_member_id
   from public.members m
   join public.memberships ms on ms.member_id = m.id and ms.owner_id = m.owner_id
   where m.owner_id = p_owner_id
-    and regexp_replace(coalesce(m.phone, ''), '[^0-9]', '', 'g') = v_phone
+    and (right(regexp_replace(coalesce(m.phone, ''), '[^0-9]', '', 'g'), 10) = right(v_phone, 10)
+      or right(regexp_replace(coalesce(m.secondary_phone, ''), '[^0-9]', '', 'g'), 10) = right(v_phone, 10))
     and ms.status = 'active' and ms.start_date <= v_today and ms.end_date >= v_today;
   if coalesce(v_match_count, 0) <> 1 or v_member_id is null then return 'not_eligible'; end if;
   insert into public.attendance (owner_id, member_id, attendance_date, check_in, source, marked_by)
