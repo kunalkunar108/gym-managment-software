@@ -8,6 +8,8 @@ type Props = { memberId: string; ownerId: string; isTrainer: boolean; onBack: ()
 type Note = { id: string; note: string; author_name: string; author_role: string; created_at: string };
 type Membership = { id: string; plan_name: string | null; start_date: string; end_date: string; status: string; amount?: number };
 type PaymentRecord = { id: string; receipt_number: string; amount: number; paid_on: string; method: string; status: string; reference: string | null };
+type FaceConsent = { consent_status: string; consent_version: string | null; consented_at: string | null; withdrawn_at: string | null; has_template: boolean };
+const FACE_CONSENT_VERSION = "gymdesk-face-consent-v1";
 const prettyDate = (value: string) => value ? new Date(value + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
 export default function MemberProfile({ memberId, ownerId, isTrainer, onBack }: Props) {
@@ -22,13 +24,17 @@ export default function MemberProfile({ memberId, ownerId, isTrainer, onBack }: 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [faceConsent, setFaceConsent] = useState<FaceConsent | null>(null);
 
   async function loadProfile() {
     setLoading(true); setError("");
-    const [memberResult, noteResult] = await Promise.all([
+    const [memberResult, noteResult, faceConsentResult] = await Promise.all([
       supabase.from("members").select("id,full_name,phone,secondary_phone,email,gender,address,joined_on,status,photo_path").eq("id", memberId).eq("owner_id", ownerId).single(),
-      supabase.from("member_notes").select("id,note,author_name,author_role,created_at").eq("member_id", memberId).eq("owner_id", ownerId).order("created_at", { ascending: false })
+      supabase.from("member_notes").select("id,note,author_name,author_role,created_at").eq("member_id", memberId).eq("owner_id", ownerId).order("created_at", { ascending: false }),
+      supabase.rpc("get_member_face_consent_status", { p_member_id: memberId })
     ]);
+    if (!faceConsentResult.error && faceConsentResult.data?.[0]) setFaceConsent(faceConsentResult.data[0] as FaceConsent);
+    else if (faceConsentResult.error) setError(faceConsentResult.error.message);
     if (memberResult.error) setError(memberResult.error.message);
     else {
       setMember(memberResult.data);
@@ -51,6 +57,22 @@ export default function MemberProfile({ memberId, ownerId, isTrainer, onBack }: 
   }
 
   useEffect(() => { void loadProfile(); }, [memberId, ownerId, isTrainer]);
+
+  async function updateFaceConsent(action: "granted" | "withdrawn") {
+    const message = action === "granted"
+      ? "Only continue if the member is physically present, has read the face-verification notice below, and has personally agreed. This records their in-person consent. Continue?"
+      : "Withdraw face-verification consent? This disables face verification and deletes the stored encrypted face template. The consent audit record is retained. Continue?";
+    if (!window.confirm(message)) return;
+    setSaving(true); setError("");
+    const { error: consentError } = await supabase.rpc("record_member_face_consent", {
+      p_member_id: memberId,
+      p_action: action,
+      p_consent_version: FACE_CONSENT_VERSION
+    });
+    if (consentError) setError(consentError.message);
+    else await loadProfile();
+    setSaving(false);
+  }
 
   async function addNote(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
