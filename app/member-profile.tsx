@@ -127,6 +127,25 @@ export default function MemberProfile({ memberId, ownerId, isTrainer, onBack }: 
     </section>
 
     <section className="rounded-2xl border border-[#e5ebe5] bg-white p-5">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div><h2 className="font-semibold text-[#27352b]">Face verification consent</h2><p className="mt-1 text-xs text-[#8a968e]">Separate, optional consent for attendance identity verification</p></div>
+        <span className={`rounded-full px-3 py-1.5 text-xs font-semibold capitalize ${faceConsent?.consent_status === "consented" ? "bg-[#edf7ef] text-[#278348]" : "bg-[#f2f5f2] text-[#68766d]"}`}>{faceConsent?.consent_status?.replaceAll("_", " ") || "not consented"}</span>
+      </div>
+      <div className="mt-4 rounded-xl bg-[#f7f9f7] p-4 text-sm leading-6 text-[#56645a]">
+        <p className="font-semibold text-[#35443a]">Member notice — GymDesk face attendance</p>
+        <p className="mt-2">I understand that the gym may capture my face to create an encrypted biometric template and compare it with a live camera capture to verify my identity when I check in. This is optional and is used only for gym attendance verification.</p>
+        <p className="mt-2">I can choose phone-number check-in instead. I can withdraw consent at any time by asking the gym owner or trainer. When I withdraw, face verification is disabled and the stored biometric template is deleted. My choice will not cancel my gym membership.</p>
+        <p className="mt-2 text-xs text-[#7b887f]">Notice version: {FACE_CONSENT_VERSION}. Staff records consent only after the member personally confirms in person.</p>
+      </div>
+      {faceConsent?.consented_at && <p className="mt-3 text-xs text-[#7b887f]">Consent recorded: {new Date(faceConsent.consented_at).toLocaleString("en-IN")}{faceConsent.has_template ? " · Face template registered" : " · Face template not registered yet"}</p>}
+      {faceConsent?.withdrawn_at && <p className="mt-3 text-xs text-[#7b887f]">Consent withdrawn: {new Date(faceConsent.withdrawn_at).toLocaleString("en-IN")}</p>}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {faceConsent?.consent_status !== "consented" ? <button type="button" disabled={saving} onClick={() => void updateFaceConsent("granted")} className="rounded-xl bg-[#278348] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">Record member consent</button> : <button type="button" disabled={saving} onClick={() => void updateFaceConsent("withdrawn")} className="rounded-xl border border-[#d8e1d9] px-4 py-2.5 text-sm font-semibold text-[#a24d42] disabled:opacity-50">Withdraw consent & delete template</button>}
+      </div>
+      <p className="mt-3 text-xs text-[#8a968e]">Face capture and matching are not active yet. Recording consent does not register a face or mark attendance.</p>
+    </section>
+
+    <section className="rounded-2xl border border-[#e5ebe5] bg-white p-5">
       <div className="mb-4 flex items-center justify-between"><div><h2 className="font-semibold text-[#27352b]">Membership history</h2><p className="mt-1 text-xs text-[#8a968e]">Current and previous membership periods</p></div><span className="rounded-full bg-[#f2f5f2] px-2.5 py-1 text-xs text-[#68766d]">{memberships.length} records</span></div>
       {memberships.length ? <div className="divide-y divide-[#edf1ed]">{memberships.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3"><div><p className="text-sm font-semibold text-[#3d4b41]">{item.plan_name || "Custom membership"}</p><p className="mt-1 text-xs text-[#89948c]">{prettyDate(item.start_date)} – {prettyDate(item.end_date)}</p></div><div className="text-right"><span className="rounded-full bg-[#f1f5f1] px-2.5 py-1 text-xs capitalize text-[#637168]">{item.status}</span>{!isTrainer && item.amount !== undefined && <p className="mt-1 text-xs font-semibold text-[#536158]">₹{Number(item.amount).toLocaleString("en-IN")}</p>}</div></div>)}</div> : <p className="py-5 text-sm text-[#8a968e]">No membership history recorded.</p>}
       {latest && <p className="mt-3 border-t border-[#edf1ed] pt-3 text-xs text-[#89948c]">Latest membership ends {prettyDate(latest.end_date)}.</p>}
