@@ -9,7 +9,6 @@ import MemberProfile from "./member-profile";
 import { openMemberProfile } from "../lib/member-navigation";
 import MembershipManagementPage from "./membership-management-page";
 import AttendancePage from "./attendance-page";
-import AttendancePage from "./attendance-page";
 
 type Member = { id: string; full_name: string; phone: string | null; status: string; joined_on: string; photo_path: string | null; photo_url?: string | null };
 type ExpiringMembership = { id: string; member_id: string; end_date: string; status: string };
