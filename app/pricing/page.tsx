@@ -48,7 +48,7 @@ export default function PricingPage() {
           <a href="#plans" className="rounded-xl bg-[#258148] px-6 py-3 text-sm font-bold text-white shadow-sm hover:bg-[#1e6e3c]">Explore pricing</a>
           <a href="#one-time" className="rounded-xl border border-[#dfe8df] bg-white px-6 py-3 text-sm font-bold text-[#425047] hover:bg-[#f5f8f5]">One-time licence</a>
         </div>
-        <p className="mt-5 text-xs text-[#99a39c]">Transparent pricing • One gym location per plan • No hidden feature promises</p>
+        <div className="mx-auto mt-7 max-w-3xl rounded-xl border border-[#f0dfbd] bg-[#fffaf0] px-4 py-3 text-left text-xs leading-5 text-[#87652e]"><strong>Early-access notice:</strong> The current GymDesk build is still under development. Confirm feature availability, implementation scope and delivery dates in a written quotation before purchasing.</div>\n        <p className="mt-5 text-xs text-[#99a39c]">Transparent pricing • One gym location per plan • No hidden feature promises</p>
       </section>
 
       <section id="plans" className="mx-auto max-w-7xl px-5 pb-16 sm:px-8">
@@ -87,7 +87,7 @@ export default function PricingPage() {
       </section>
 
       <section id="contact" className="bg-[#17251b] px-5 py-14 text-center text-white sm:px-8">
-        <p className="text-xs font-extrabold tracking-[.18em] text-[#9bd3a7]">NEXT STEP</p><h2 className="mt-3 text-3xl font-extrabold tracking-tight">Let's scope the right setup for your gym.</h2><p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#c0ccc2]">Ask for a walkthrough and a written quotation. We will confirm which features are available now and which require implementation.</p><a href="mailto:hello@gymdesk.app?subject=GymDesk%20demo%20request" className="mt-7 inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-[#1d6e3c] hover:bg-[#edf6ee]">Request a demo <ArrowRight size={15} /></a><p className="mt-8 text-xs text-[#91a095]">© {new Date().getFullYear()} GymDesk. All rights reserved.</p>
+        <p className="text-xs font-extrabold tracking-[.18em] text-[#9bd3a7]">NEXT STEP</p><h2 className="mt-3 text-3xl font-extrabold tracking-tight">Let's scope the right setup for your gym.</h2><p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-[#c0ccc2]">Ask for a walkthrough and a written quotation. We will confirm which features are available now and which require implementation.</p><a href="#plans" className="mt-7 inline-flex h-11 items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-[#1d6e3c] hover:bg-[#edf6ee]">Compare plans <ArrowRight size={15} /></a><p className="mt-8 text-xs text-[#91a095]">© {new Date().getFullYear()} GymDesk. All rights reserved.</p>
       </section>
       <div className="border-t border-[#e6ece6] bg-white px-5 py-4 text-center text-[11px] text-[#9aa49d]">Pricing shown in INR. Taxes, if applicable, are additional. Final scope is confirmed in the client quotation.</div>
     </main>
