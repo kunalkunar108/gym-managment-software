@@ -1,17 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, CalendarCheck, ChevronRight, RefreshCw, Search, UserRoundPlus, Users, LayoutDashboard, Phone, Dumbbell, Clock3 } from "lucide-react";
+import { CalendarClock, ChevronRight, RefreshCw, Search, UserRoundPlus, Users, LayoutDashboard, Phone, Dumbbell, Clock3 } from "lucide-react";
 import { supabase } from "../lib/supabase";
 import SignOutButton from "./sign-out-button";
 import AdmissionsPage from "./admissions-page";
 import MemberProfile from "./member-profile";
 import { openMemberProfile } from "../lib/member-navigation";
 import MembershipManagementPage from "./membership-management-page";
-import AttendancePage from "./attendance-page";
 
 type Member = { id: string; full_name: string; phone: string | null; status: string; joined_on: string; photo_path: string | null; photo_url?: string | null };
-type ExpiringMembership = { id: string; member_id: string; end_date: string; status: string };
+type ExpiringMembership = { id: string; member_id: string; member_name: string; member_phone: string | null; end_date: string; status: string; };
 const dateLabel = (value: string) => new Date(value + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
 const initials = (name: string) => name.split(" ").map(part => part[0]).slice(0, 2).join("").toUpperCase();
 
@@ -21,7 +20,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   const [query, setQuery] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [renewalMemberId, setRenewalMemberId] = useState<string | null>(null);
-  const [view, setView] = useState<"overview" | "admissions" | "members" | "membership-management" | "attendance">("overview");
+  const [view, setView] = useState<"overview" | "admissions" | "members" | "membership-management">("overview");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -30,7 +29,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
     setError("");
     const [{ data: memberRows, error: memberError }, { data: expiryRows, error: expiryError }] = await Promise.all([
       supabase.from("members").select("id,full_name,phone,status,joined_on,photo_path").eq("owner_id", ownerId).order("created_at", { ascending: false }),
-      supabase.rpc("trainer_list_expiring_memberships")
+      supabase.rpc("trainer_list_membership_management")
     ]);
     if (memberError) setError(memberError.message);
     else {
@@ -58,6 +57,10 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   }, []);
 
   const activeMembers = members.filter(member => member.status === "active").length;
+  const todayKey = new Date().toLocaleDateString("en-CA");
+  const soonDate = new Date(); soonDate.setDate(soonDate.getDate() + 7);
+  const soonKey = soonDate.toLocaleDateString("en-CA");
+  const followUpMemberships = expiring.filter(item => item.status === "active" && item.end_date <= soonKey).sort((a, b) => a.end_date.localeCompare(b.end_date));
   const newThisMonth = members.filter(member => {
     if (!member.joined_on) return false;
     const joined = new Date(member.joined_on + "T00:00:00");
@@ -68,7 +71,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   const recentMembers = members.slice(0, 5);
   const filteredMembers = members.filter(member => (member.full_name + " " + (member.phone || "")).toLowerCase().includes(query.toLowerCase()));
 
-  const navButton = (key: "overview" | "admissions" | "members" | "membership-management" | "attendance", label: string, Icon: typeof Users) => (
+  const navButton = (key: "overview" | "admissions" | "members" | "membership-management", label: string, Icon: typeof Users) => (
     <button onClick={() => setView(key)} className={"flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition " + (view === key ? "bg-[#e8f5eb] text-[#278348]" : "text-[#718077] hover:bg-[#f3f6f3]")}>
       <Icon size={17} />{label}
     </button>
@@ -85,7 +88,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
       </header>
 
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-        <div><p className="text-xs font-semibold tracking-[.14em] text-[#8a968e]">{new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date()).toUpperCase()}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{view === "overview" ? "Trainer overview" : view === "admissions" ? "Admissions & renewals" : view === "membership-management" ? "Membership Management" : view === "attendance" ? "Attendance" : selectedMemberId ? "Member profile" : "Member directory"}</h1><p className="mt-2 text-sm text-[#7b887f]">Manage member activity, admissions and follow-ups.</p></div>
+        <div><p className="text-xs font-semibold tracking-[.14em] text-[#8a968e]">{new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date()).toUpperCase()}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{view === "overview" ? "Trainer overview" : view === "admissions" ? "Admissions & renewals" : view === "membership-management" ? "Membership Management" : selectedMemberId ? "Member profile" : "Member directory"}</h1><p className="mt-2 text-sm text-[#7b887f]">Manage member activity, admissions and follow-ups.</p></div>
         <button onClick={() => void loadDashboard()} className="inline-flex items-center gap-2 rounded-xl border border-[#e3eae3] bg-white px-4 py-2.5 text-sm font-medium text-[#536158] hover:bg-[#f9fbf9]"><RefreshCw size={15}/> Refresh data</button>
       </div>
 
@@ -94,12 +97,129 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
         {navButton("admissions", "Admissions & renewals", UserRoundPlus)}
         {navButton("members", "Members", Users)}
         {navButton("membership-management", "Membership Management", CalendarClock)}
-        {navButton("attendance", "Attendance", CalendarCheck)}
       </div>
 
       {error && <div role="alert" className="mb-5 rounded-xl border border-[#f2d2ce] bg-[#fff4f2] px-4 py-3 text-sm text-[#a63d32]">{error}</div>}
 
-      {view === "attendance" ? <AttendancePage ownerId={ownerId} isTrainer={true} /> : view === "membership-management" ? <MembershipManagementPage ownerId={ownerId} isTrainer={true} onRenew={(memberId) => { setRenewalMemberId(memberId); setView("admissions"); }} /> : view === "admissions" ? <AdmissionsPage trainerMode initialMemberId={renewalMemberId} /> : view === "overview" ? <>
+      {view === "membership-management" ? <MembershipManagementPage ownerId={ownerId} isTrainer={true} onRenew={(memberId) => { setRenewalMemberId(memberId); setView("admissions"); }} /> : view === "admissions" ? <AdmissionsPage trainerMode initialMemberId={renewalMemberId} /> : view === "overview" ? <>
+        <section className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7b887f]">Total members</span><span className="rounded-xl bg-[#edf5ff] p-2.5 text-[#4c83bd]"><Users size={19}/></span></div><p className="mt-4 text-3xl font-semibold">{loading ? "—" : members.length}</p><p className="mt-1 text-xs text-[#8a968e]">Registered member profiles</p></div>
+          <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7b887f]">Active members</span><span className="rounded-xl bg-[#e8f5eb] p-2.5 text-[#278348]"><Dumbbell size={19}/></span></div><p className="mt-4 text-3xl font-semibold">{loading ? "—" : activeMembers}</p><p className="mt-1 text-xs text-[#8a968e]">Currently marked active</p></div>
+          <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7b887f]">New this month</span><span className="rounded-xl bg-[#f4efff] p-2.5 text-[#8667bd]"><UserRoundPlus size={19}/></span></div><p className="mt-4 text-3xl font-semibold">{loading ? "—" : newThisMonth}</p><p className="mt-1 text-xs text-[#8a968e]">Joined during this month</p></div>
+          <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7b887f]">Expiring soon</span><span className="rounded-xl bg-[#fff4e5] p-2.5 text-[#bd812d]"><CalendarClock size={19}/></span></div><p className="mt-4 text-3xl font-semibold">{loading ? "—" : expiring.length}</p><p className="mt-1 text-xs text-[#8a968e]">Active memberships in next 7 days</p></div>
+        </section>
+
+        <section className="mb-6 grid gap-5 xl:grid-cols-[1.35fr_1fr]">
+          <div className="overflow-hidden rounded-2xl border border-[#e5ebe5] bg-white">
+            <div className="flex items-center justify-between border-b border-[#edf1ed] px-5 py-4"><div><h2 className="font-semibold">Recent admissions</h2><p className="mt-1 text-xs text-[#8a968e]">Latest members registered at your gym</p></div><button onClick={() => setView("members")} className="inline-flex items-center gap-1 text-xs font-semibold text-[#278348]">All members <ChevronRight size={14}/></button></div>
+            {loading ? <p className="py-10 text-center text-sm text-[#8a968e]">Loading members…</p> : recentMembers.length ? <div className="divide-y divide-[#edf1ed]">{recentMembers.map(member => <div key={member.id} className="flex items-center justify-between gap-3 px-5 py-3.5"><div className="flex min-w-0 items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#e8f5eb] text-xs font-semibold text-[#278348]">{member.photo_url ? <img src={member.photo_url} alt="" className="h-full w-full object-cover"/> : initials(member.full_name)}</div><div className="min-w-0"><button type="button" onClick={() => openMemberProfile(member.id)} className="block truncate text-left text-sm font-semibold hover:text-[#278348] hover:underline">{member.full_name}</button><p className="mt-0.5 text-xs text-[#8a968e]">{member.joined_on ? "Joined " + dateLabel(member.joined_on) : "Join date unavailable"}</p></div></div><span className={"rounded-full px-2.5 py-1 text-[11px] font-semibold " + (member.status === "active" ? "bg-[#e8f5eb] text-[#278348]" : "bg-[#f2f3f2] text-[#748078]")}>{member.status}</span></div>)}</div> : <p className="py-10 text-center text-sm text-[#8a968e]">No members registered yet.</p>}
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-[#e5ebe5] bg-white">
+            <div className="flex items-center justify-between border-b border-[#edf1ed] px-5 py-4"><div><h2 className="font-semibold">Expiring & expired memberships</h2><p className="mt-1 text-xs text-[#8a968e]">Follow up on memberships ending within 7 days or already expired</p></div><span className="rounded-full bg-[#fff4e5] px-2.5 py-1 text-xs font-semibold text-[#b77925]">{loading ? "—" : followUpMemberships.length}</span></div>
+            {loading ? <p className="py-10 text-center text-sm text-[#8a968e]">Loading membership follow-ups…</p> : followUpMemberships.length ? <div className="divide-y divide-[#edf1ed]">{followUpMemberships.slice(0, 8).map(item => { const isExpired = item.end_date < todayKey; const member = memberById.get(item.member_id); return <div key={item.id} className="flex items-center justify-between gap-3 px-5 py-3.5"><div className="flex min-w-0 items-center gap-3"><CalendarClock size={18} className={"shrink-0 " + (isExpired ? "text-[#c45a50]" : "text-[#bd812d]")}/><div className="min-w-0"><button type="button" onClick={() => member && openMemberProfile(member.id)} disabled={!member} className="block truncate text-left text-sm font-semibold hover:text-[#278348] hover:underline">{item.member_name || member?.full_name || "Member"}</button><p className="text-xs text-[#8a968e]">{item.member_phone || member?.phone || "No phone number"}</p></div></div><div className="flex shrink-0 items-center gap-2"><span className={"text-xs font-semibold " + (isExpired ? "text-[#c45a50]" : "text-[#b77925]")}>{isExpired ? "Expired · " + dateLabel(item.end_date) : item.end_date === todayKey ? "Ends today" : dateLabel(item.end_date)}</span><button onClick={() => { setRenewalMemberId(item.member_id); setView("admissions"); }} className="rounded-lg bg-[#e8f5eb] px-2.5 py-1.5 text-xs font-semibold text-[#278348]">Renew</button></div></div>; })}</div> : <p className="py-10 text-center text-sm text-[#8a968e]">No memberships expiring or expired.</p>}
+          </div>mport { useEffect, useMemo, useState } from "react";
+import { CalendarClock, ChevronRight, RefreshCw, Search, UserRoundPlus, Users, LayoutDashboard, Phone, Dumbbell, Clock3 } from "lucide-react";
+import { supabase } from "../lib/supabase";
+import SignOutButton from "./sign-out-button";
+import AdmissionsPage from "./admissions-page";
+import MemberProfile from "./member-profile";
+import { openMemberProfile } from "../lib/member-navigation";
+import MembershipManagementPage from "./membership-management-page";
+
+type Member = { id: string; full_name: string; phone: string | null; status: string; joined_on: string; photo_path: string | null; photo_url?: string | null };
+type ExpiringMembership = { id: string; member_id: string; member_name: string; member_phone: string | null; end_date: string; status: string; };
+const dateLabel = (value: string) => new Date(value + "T00:00:00").toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
+const initials = (name: string) => name.split(" ").map(part => part[0]).slice(0, 2).join("").toUpperCase();
+
+export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [expiring, setExpiring] = useState<ExpiringMembership[]>([]);
+  const [query, setQuery] = useState("");
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [renewalMemberId, setRenewalMemberId] = useState<string | null>(null);
+  const [view, setView] = useState<"overview" | "admissions" | "members" | "membership-management">("overview");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  async function loadDashboard() {
+    setLoading(true);
+    setError("");
+    const [{ data: memberRows, error: memberError }, { data: expiryRows, error: expiryError }] = await Promise.all([
+      supabase.from("members").select("id,full_name,phone,status,joined_on,photo_path").eq("owner_id", ownerId).order("created_at", { ascending: false }),
+      supabase.rpc("trainer_list_membership_management")
+    ]);
+    if (memberError) setError(memberError.message);
+    else {
+      const withPhotos = await Promise.all((memberRows ?? []).map(async (member: Member) => {
+        if (!member.photo_path) return { ...member, photo_url: null };
+        const { data: signed } = await supabase.storage.from("member-photos").createSignedUrl(member.photo_path, 3600);
+        return { ...member, photo_url: signed?.signedUrl ?? null };
+      }));
+      setMembers(withPhotos);
+    }
+    if (expiryError) setError(prev => prev ? prev + " · " + expiryError.message : expiryError.message);
+    setExpiring((expiryRows ?? []) as ExpiringMembership[]);
+    setLoading(false);
+  }
+
+  useEffect(() => { void loadDashboard(); }, [ownerId]);
+
+  useEffect(() => {
+    const handleOpenMember = (event: Event) => {
+      const memberId = (event as CustomEvent<{ memberId?: string }>).detail?.memberId;
+      if (memberId) { setSelectedMemberId(memberId); setView("members"); }
+    };
+    window.addEventListener("gymdesk:open-member-profile", handleOpenMember);
+    return () => window.removeEventListener("gymdesk:open-member-profile", handleOpenMember);
+  }, []);
+
+  const activeMembers = members.filter(member => member.status === "active").length;
+  const todayKey = new Date().toLocaleDateString("en-CA");
+  const soonDate = new Date(); soonDate.setDate(soonDate.getDate() + 7);
+  const soonKey = soonDate.toLocaleDateString("en-CA");
+  const followUpMemberships = expiring.filter(item => item.status === "active" && item.end_date <= soonKey).sort((a, b) => a.end_date.localeCompare(b.end_date));
+  const newThisMonth = members.filter(member => {
+    if (!member.joined_on) return false;
+    const joined = new Date(member.joined_on + "T00:00:00");
+    const now = new Date();
+    return joined.getMonth() === now.getMonth() && joined.getFullYear() === now.getFullYear();
+  }).length;
+  const memberById = useMemo(() => new Map(members.map(member => [member.id, member])), [members]);
+  const recentMembers = members.slice(0, 5);
+  const filteredMembers = members.filter(member => (member.full_name + " " + (member.phone || "")).toLowerCase().includes(query.toLowerCase()));
+
+  const navButton = (key: "overview" | "admissions" | "members" | "membership-management", label: string, Icon: typeof Users) => (
+    <button onClick={() => setView(key)} className={"flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition " + (view === key ? "bg-[#e8f5eb] text-[#278348]" : "text-[#718077] hover:bg-[#f3f6f3]")}>
+      <Icon size={17} />{label}
+    </button>
+  );
+
+  return <main className="min-h-screen bg-[#f7f9f7] px-4 py-5 text-[#17211c] sm:px-8 sm:py-7">
+    <div className="mx-auto max-w-7xl">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#e8f5eb] text-[#278348]"><Dumbbell size={22}/></div>
+          <div><div className="text-xl font-bold tracking-tight">gym<span className="text-[#329653]">desk</span></div><p className="mt-0.5 text-[10px] font-bold tracking-[.18em] text-[#8a968e]">TRAINER WORKSPACE</p></div>
+        </div>
+        <div className="flex items-center gap-3"><span className="rounded-full border border-[#dceee0] bg-white px-3 py-2 text-xs font-semibold text-[#278348]">Trainer account</span><SignOutButton /></div>
+      </header>
+
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div><p className="text-xs font-semibold tracking-[.14em] text-[#8a968e]">{new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date()).toUpperCase()}</p><h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">{view === "overview" ? "Trainer overview" : view === "admissions" ? "Admissions & renewals" : view === "membership-management" ? "Membership Management" : selectedMemberId ? "Member profile" : "Member directory"}</h1><p className="mt-2 text-sm text-[#7b887f]">Manage member activity, admissions and follow-ups.</p></div>
+        <button onClick={() => void loadDashboard()} className="inline-flex items-center gap-2 rounded-xl border border-[#e3eae3] bg-white px-4 py-2.5 text-sm font-medium text-[#536158] hover:bg-[#f9fbf9]"><RefreshCw size={15}/> Refresh data</button>
+      </div>
+
+      <div className="mb-6 flex flex-wrap gap-2 rounded-2xl border border-[#e5ebe5] bg-white p-2">
+        {navButton("overview", "Overview", LayoutDashboard)}
+        {navButton("admissions", "Admissions & renewals", UserRoundPlus)}
+        {navButton("members", "Members", Users)}
+        {navButton("membership-management", "Membership Management", CalendarClock)}
+      </div>
+
+      {error && <div role="alert" className="mb-5 rounded-xl border border-[#f2d2ce] bg-[#fff4f2] px-4 py-3 text-sm text-[#a63d32]">{error}</div>}
+
+      {view === "membership-management" ? <MembershipManagementPage ownerId={ownerId} isTrainer={true} onRenew={(memberId) => { setRenewalMemberId(memberId); setView("admissions"); }} /> : view === "admissions" ? <AdmissionsPage trainerMode initialMemberId={renewalMemberId} /> : view === "overview" ? <>
         <section className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7b887f]">Total members</span><span className="rounded-xl bg-[#edf5ff] p-2.5 text-[#4c83bd]"><Users size={19}/></span></div><p className="mt-4 text-3xl font-semibold">{loading ? "—" : members.length}</p><p className="mt-1 text-xs text-[#8a968e]">Registered member profiles</p></div>
           <div className="rounded-2xl border border-[#e5ebe5] bg-white p-5"><div className="flex items-center justify-between"><span className="text-sm text-[#7b887f]">Active members</span><span className="rounded-xl bg-[#e8f5eb] p-2.5 text-[#278348]"><Dumbbell size={19}/></span></div><p className="mt-4 text-3xl font-semibold">{loading ? "—" : activeMembers}</p><p className="mt-1 text-xs text-[#8a968e]">Currently marked active</p></div>
