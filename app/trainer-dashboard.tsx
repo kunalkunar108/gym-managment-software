@@ -60,7 +60,7 @@ export default function TrainerDashboard({ ownerId }: { ownerId: string }) {
   const todayKey = new Date().toLocaleDateString("en-CA");
   const soonDate = new Date(); soonDate.setDate(soonDate.getDate() + 7);
   const soonKey = soonDate.toLocaleDateString("en-CA");
-  const followUpMemberships = expiring.filter(item => item.status === "active" && item.end_date <= soonKey).sort((a, b) => a.end_date.localeCompare(b.end_date));
+  const followUpMemberships = expiring.filter(item => item.status !== "cancelled" && item.status !== "pending" && item.end_date <= soonKey).sort((a, b) => a.end_date.localeCompare(b.end_date));
   const newThisMonth = members.filter(member => {
     if (!member.joined_on) return false;
     const joined = new Date(member.joined_on + "T00:00:00");
