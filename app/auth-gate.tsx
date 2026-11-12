@@ -1,11 +1,13 @@
 "use client";
 
 import { FormEvent, useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
 import { Dumbbell, LoaderCircle, LockKeyhole, Mail, UserRound } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [session, setSession] = useState<Session | null>(null);
   const [checking, setChecking] = useState(true);
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -68,6 +70,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       setBusy(false);
     }
   }
+
+  if (pathname === "/pricing") return <>{children}</>;
 
   if (checking) {
     return <div className="min-h-screen flex items-center justify-center bg-[#f7f9f7] text-[#637168]"><LoaderCircle className="animate-spin mr-2" size={18} /> Checking your session…</div>;
